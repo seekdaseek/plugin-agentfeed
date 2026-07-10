@@ -1,0 +1,72 @@
+{
+  "name": "@seekdaseek/plugin-agentfeed",
+  "version": "0.1.0",
+  "description": "elizaOS plugin for AgentFeed — paid crypto market data (liquidations, positioning, funding, token risk) over x402 micropayments on Solana. $0.001–$0.01 per call in USDC, no API keys, no subscriptions.",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "test": "node --test"
+  },
+  "keywords": [
+    "elizaos",
+    "elizaos-plugins",
+    "x402",
+    "solana",
+    "crypto",
+    "market-data",
+    "liquidations",
+    "trading",
+    "ai-agents",
+    "micropayments"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seekdaseek/plugin-agentfeed"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@solana/kit": "^7.0.0",
+    "@x402/fetch": "^2.17.0",
+    "@x402/svm": "^2.17.0",
+    "bs58": "^6.0.0"
+  },
+  "peerDependencies": {
+    "@elizaos/core": ">=1.0.0"
+  },
+  "devDependencies": {
+    "@elizaos/core": "^1.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  },
+  "agentConfig": {
+    "pluginType": "elizaos:plugin:1.0.0",
+    "pluginParameters": {
+      "AGENTFEED_PRIVATE_KEY": {
+        "type": "string",
+        "description": "Solana private key of the paying wallet (base58 string OR JSON byte array). Wallet must hold USDC on Solana mainnet. Fund with $1 of USDC = ~100-1000 calls."
+      },
+      "AGENTFEED_BASE_URL": {
+        "type": "string",
+        "description": "AgentFeed API base URL. Default: https://x402.ochinimus.app"
+      },
+      "AGENTFEED_MAX_SPEND_PER_CALL": {
+        "type": "string",
+        "description": "Safety cap in USD per single API call. Any 402 quote above this is refused. Default: 0.02"
+      }
+    }
+  }
+}
