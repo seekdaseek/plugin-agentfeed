@@ -35,7 +35,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/seekdaseek/plugin-agentfeed"
+    "url": "git+https://github.com/seekdaseek/plugin-agentfeed.git"
   },
   "license": "MIT",
   "dependencies": {
