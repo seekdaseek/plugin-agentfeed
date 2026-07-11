@@ -79,8 +79,20 @@ export class AgentFeedService extends Service {
     this.payerAddress = keypair.address;
     const signer = toClientSvmSigner(keypair);
 
+    // Send-time spend bound: filters payment requirements INSIDE the wrapper,
+    // immediately before payment creation. A server quoting higher at pay time
+    // than at preflight gets its requirement dropped; if nothing remains under
+    // the cap, the wrapper fails the payment instead of overpaying.
+    const capBaseUnits = Math.round(this.maxSpendUsd * 10 ** USDC_DECIMALS);
+    const maxSpendPolicy = (_v: number, reqs: any[]) =>
+      reqs.filter((r) => {
+        const raw = Number(r?.maxAmountRequired ?? r?.amount ?? r?.maxAmount);
+        return Number.isFinite(raw) && raw > 0 && raw <= capBaseUnits;
+      });
+
     this.payFetch = wrapFetchWithPaymentFromConfig(fetch, {
       schemes: [{ network: 'solana:*', client: new ExactSvmScheme(signer) }],
+      policies: [maxSpendPolicy],
     }) as typeof this.payFetch;
 
     logger.info(
