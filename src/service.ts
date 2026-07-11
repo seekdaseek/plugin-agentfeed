@@ -40,6 +40,8 @@ export class AgentFeedService extends Service {
   private payerAddress = '';
   /** path -> { usd, checkedAt } of last approved quote */
   private approvedQuotes = new Map<string, { usd: number; checkedAt: number }>();
+  /** requirements that survived the spend policy on the most recent payment */
+  private lastSurvivingReqs: any[] = [];
   /** lifetime spend counter for this process (informational) */
   private totalSpentUsd = 0;
 
@@ -84,11 +86,17 @@ export class AgentFeedService extends Service {
     // than at preflight gets its requirement dropped; if nothing remains under
     // the cap, the wrapper fails the payment instead of overpaying.
     const capBaseUnits = Math.round(this.maxSpendUsd * 10 ** USDC_DECIMALS);
-    const maxSpendPolicy = (_v: number, reqs: any[]) =>
-      reqs.filter((r) => {
+    const maxSpendPolicy = (_v: number, reqs: any[]) => {
+      const surviving = reqs.filter((r) => {
         const raw = Number(r?.maxAmountRequired ?? r?.amount ?? r?.maxAmount);
         return Number.isFinite(raw) && raw > 0 && raw <= capBaseUnits;
       });
+      // The signer consumes from this filtered set (default selector: first
+      // entry for a registered scheme). Record it so accounting reflects the
+      // requirement actually signed, not the preflight quote.
+      this.lastSurvivingReqs = surviving;
+      return surviving;
+    };
 
     this.payFetch = wrapFetchWithPaymentFromConfig(fetch, {
       schemes: [{ network: 'solana:*', client: new ExactSvmScheme(signer) }],
@@ -179,8 +187,21 @@ export class AgentFeedService extends Service {
       if (!res.ok) {
         return { ok: false, status: res.status, data, error: `AgentFeed HTTP ${res.status}` };
       }
-      if (settlement) this.totalSpentUsd += quotedUsd;
-      return { ok: true, status: res.status, data, paidUsd: settlement ? quotedUsd : 0, settlement };
+      let paidUsd = 0;
+      if (settlement) {
+        const s: any = settlement;
+        // Prefer: amount in the settlement itself; else the requirement the
+        // signer consumed (matching the settled network); else preflight quote.
+        let raw = Number(s?.amount ?? s?.paidAmount);
+        if (!Number.isFinite(raw) || raw <= 0) {
+          const net = String(s?.network ?? '');
+          const req = this.lastSurvivingReqs.find((r) => String(r?.network ?? '') === net) ?? this.lastSurvivingReqs[0];
+          raw = Number(req?.maxAmountRequired ?? req?.amount ?? req?.maxAmount);
+        }
+        paidUsd = Number.isFinite(raw) && raw > 0 ? raw / 10 ** USDC_DECIMALS : quotedUsd;
+        this.totalSpentUsd += paidUsd;
+      }
+      return { ok: true, status: res.status, data, paidUsd, settlement };
     } catch (e: any) {
       return { ok: false, status: 0, data: null, error: e?.message || String(e) };
     }

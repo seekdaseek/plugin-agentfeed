@@ -1,6 +1,6 @@
 {
   "name": "@seekdaseek/plugin-agentfeed",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "elizaOS plugin for AgentFeed — paid crypto market data (liquidations, positioning, funding, token risk) over x402 micropayments on Solana. $0.001–$0.01 per call in USDC, no API keys, no subscriptions.",
   "type": "module",
   "main": "dist/index.js",
