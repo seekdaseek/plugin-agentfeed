@@ -1,7 +1,7 @@
 {
   "name": "@seekdaseek/plugin-agentfeed",
-  "version": "0.1.2",
-  "description": "elizaOS plugin for AgentFeed — paid crypto market data (liquidations, positioning, funding, token risk) over x402 micropayments on Solana. $0.001–$0.01 per call in USDC, no API keys, no subscriptions.",
+  "version": "0.2.0",
+  "description": "elizaOS plugin for AgentFeed — paid crypto liquidation data over x402 micropayments on Solana. Full-universe cascade detection across ~600 USDT perps on Bybit, OKX and Binance, plus positioning, funding, prices and token risk. $0.001–$0.05 per call in USDC, no API keys, no subscriptions.",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -65,7 +65,7 @@
       },
       "AGENTFEED_MAX_SPEND_PER_CALL": {
         "type": "string",
-        "description": "Safety cap in USD per single API call. Any 402 quote above this is refused. Default: 0.02"
+        "description": "Safety cap in USD per single API call. Any 402 quote above this is refused. Default: 0.05 (the price of the most expensive tool, get_cascade_scan). Lower it to restrict spend; raise it only if AgentFeed adds a pricier tool."
       }
     }
   }

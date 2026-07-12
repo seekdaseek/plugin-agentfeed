@@ -22,6 +22,46 @@ export interface EndpointDef {
 
 export const ENDPOINTS: EndpointDef[] = [
   {
+    path: '/api/cascade-scan',
+    usd: 0.05,
+    action: 'AGENTFEED_GET_CASCADE_SCAN',
+    similes: ['CASCADE_SCAN', 'FULL_CASCADE_SCAN', 'SCAN_ALL_LIQUIDATIONS', 'WHAT_IS_CASCADING'],
+    description:
+      'Scan for liquidation cascades across the FULL universe of ~600 USDT perps on Bybit, OKX and Binance simultaneously ($0.05) — not just the majors. Returns each active cascade: symbol, side liquidated, USD total, print count, duration, severity (minor/major/extreme). Bybit is the only complete unthrottled liquidation tape in crypto and no exchange publishes history of it, so this coverage is not available anywhere else. Use when the agent needs to know what is blowing up across the whole market, including alts it is not already watching.',
+    triggers: [
+      'is anything cascading right now',
+      'scan the whole market for liquidation cascades',
+      'what alts are getting liquidated hard',
+      'any cascades outside the majors',
+    ],
+  },
+  {
+    path: '/api/liquidation-leaders',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_LIQUIDATION_LEADERS',
+    similes: ['LIQUIDATION_LEADERS', 'WHATS_GETTING_REKT', 'TOP_LIQUIDATIONS'],
+    description:
+      'Rank the top symbols by liquidation USD right now across ~600 USDT perps on Bybit, OKX and Binance ($0.02). Per symbol: total liquidated, long vs short split, biggest single print, venue count, dominant side. The fastest read on where leverage is being flushed.',
+    triggers: [
+      'what is getting rekt right now',
+      'which coins have the most liquidations today',
+      'where is leverage being flushed',
+    ],
+  },
+  {
+    path: '/api/cascade',
+    usd: 0.01,
+    action: 'AGENTFEED_GET_CASCADE_ALERT',
+    similes: ['CASCADE_ALERT', 'IS_THERE_A_CASCADE'],
+    description:
+      'Liquidation cascade detector for the 5 majors — SOL, BTC, ETH, XRP, DOGE — across Bybit, OKX and Binance ($0.01). Returns cascades active NOW: clustered same-side liquidations with symbol, side, USD total, prints, duration, severity. Empty array = no cascade in the window. For all ~600 perps use AGENTFEED_GET_CASCADE_SCAN instead.',
+    triggers: [
+      'is SOL cascading',
+      'is there a liquidation cascade on BTC right now',
+      'check for a cascade before I enter',
+    ],
+  },
+  {
     path: '/api/trade-context',
     usd: 0.01,
     action: 'AGENTFEED_GET_TRADE_CONTEXT',
@@ -41,7 +81,7 @@ export const ENDPOINTS: EndpointDef[] = [
     action: 'AGENTFEED_GET_LIQUIDATIONS',
     similes: ['GET_RECENT_LIQUIDATIONS', 'RECENT_LIQUIDATIONS', 'LIQUIDATION_FEED'],
     description:
-      'Fetch recent SOL/BTC perp liquidation prints ($0.003): side, size, price, exchange, timestamp. Use for questions about recent liquidations, cascades, or big liquidation prints.',
+      'Fetch recent perp liquidation prints ($0.003) across ~600 USDT perps on Bybit (complete unthrottled tape), OKX and Binance: side, size, price, exchange, timestamp. Filterable by symbol — any USDT perp, not just majors. Use for questions about recent liquidations or big prints.',
     triggers: [
       'any big liquidations in the last hour',
       'show me recent SOL liquidations',
