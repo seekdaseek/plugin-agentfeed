@@ -16,7 +16,7 @@ import bs58 from 'bs58';
 const DEFAULT_BASE_URL = 'https://x402.ochinimus.app';
 // 0.05 = the price of our most expensive tool (get_cascade_scan). At the old default of
 // 0.02 the plugin REFUSED to pay for it — silently, as a declined quote, not an error.
-const DEFAULT_MAX_SPEND_USD = 0.05;
+const DEFAULT_MAX_SPEND_USD = 0.50;
 const QUOTE_TTL_MS = 10 * 60 * 1000; // re-verify price every 10 min
 
 /** USDC has 6 decimals on Solana. */

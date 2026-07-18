@@ -190,6 +190,243 @@ export const ENDPOINTS: EndpointDef[] = [
     triggers: ['what does this wallet hold: <address>', 'portfolio of <address>'],
     param: 'wallet',
   },
+  // ---- expansion v0.1.3 (18->44): 26 tools. Query tools default server-side (SOLUSDT etc).
+  {
+    path: '/api/squeeze-score',
+    usd: 0.1,
+    action: 'AGENTFEED_GET_SQUEEZE_SCORE',
+    similes: ['SQUEEZE_SCORE', 'GET_SQUEEZE_SCORE'],
+    description:
+      'FLAGSHIP: short-squeeze / long-flush score 0-100 for any USDT perp. Composite of funding, long/short crowding, 24h OI build, and liq-skew from our exclusive tape. One number that answers "is this trade crowded and about to hurt someone".',
+    triggers: ['is SOL a crowded long right now', 'squeeze score for SOL', 'are shorts about to get squeezed on BTC'],
+  },
+  {
+    path: '/api/liq-history',
+    usd: 0.05,
+    action: 'AGENTFEED_GET_LIQ_HISTORY',
+    similes: ['LIQ_HISTORY', 'GET_LIQ_HISTORY'],
+    description:
+      'HISTORICAL liquidation tape, time-bucketed: total/long/short USD, prints, biggest print per bucket. Any USDT perp or the whole ~600-perp universe, up to 7 days back. Bybit is the only complete liq tape in crypto and no exchange publishes history of it — this data exists nowhere else.',
+    triggers: ['liquidation history for SOL over the last day', 'how much got liquidated per hour today'],
+  },
+  {
+    path: '/api/liq-heatmap',
+    usd: 0.05,
+    action: 'AGENTFEED_GET_LIQ_HEATMAP',
+    similes: ['LIQ_HEATMAP', 'GET_LIQ_HEATMAP'],
+    description:
+      'Liquidation heatmap by PRICE LEVEL from our own tape: where leverage actually got flushed in the last N hours — USD, prints, long/short split per price zone, hottest zone flagged. Real prints, not entry-price estimates.',
+    triggers: ['where did SOL leverage get flushed', 'liquidation heatmap for BTC by price'],
+  },
+  {
+    path: '/api/cascade-history',
+    usd: 0.03,
+    action: 'AGENTFEED_GET_CASCADE_HISTORY',
+    similes: ['CASCADE_HISTORY', 'GET_CASCADE_HISTORY'],
+    description:
+      'PAST liquidation cascades reconstructed from our tape: clustered same-side flush events with start/end, prints, USD total, peak print. get_cascade_alert tells you NOW; this tells you what already happened, up to 72h back.',
+    triggers: ['were there any liquidation cascades today', 'past SOL cascade events'],
+  },
+  {
+    path: '/api/venue-liq-share',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_VENUE_LIQ_SHARE',
+    similes: ['VENUE_LIQ_SHARE', 'GET_VENUE_LIQ_SHARE'],
+    description:
+      'Which venue is flushing whom: per-exchange liquidation share (Bybit/OKX/Binance) with long/short split and biggest print, any symbol or whole universe.',
+    triggers: ['which exchange is liquidating the most', 'venue breakdown of liquidations'],
+  },
+  {
+    path: '/api/funding-cross',
+    usd: 0.01,
+    action: 'AGENTFEED_GET_FUNDING_CROSS',
+    similes: ['FUNDING_CROSS', 'GET_FUNDING_CROSS'],
+    description:
+      'Funding for ANY USDT perp across Bybit + OKX + Hyperliquid in one call, with cross-venue spread and crowding read. (get_funding_rate covers SOL+BTC only.)',
+    triggers: ['funding for SOL across exchanges', 'cross-venue funding on WIF'],
+  },
+  {
+    path: '/api/funding-extremes',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_FUNDING_EXTREMES',
+    similes: ['FUNDING_EXTREMES', 'GET_FUNDING_EXTREMES'],
+    description:
+      'Most crowded trades across ~600 USDT perps: top most-positive and most-negative funding with annualized %, 24h price move and OI. Crowded shorts = squeeze candidates.',
+    triggers: ['most crowded funding trades right now', 'which perps have extreme funding'],
+  },
+  {
+    path: '/api/open-interest',
+    usd: 0.01,
+    action: 'AGENTFEED_GET_OPEN_INTEREST',
+    similes: ['OPEN_INTEREST', 'GET_OPEN_INTEREST'],
+    description:
+      'Open interest for ANY USDT perp: Bybit OI in base + USD with 1h/24h change, plus OKX OI. (get_positioning covers SOL+BTC only.)',
+    triggers: ['open interest on SOL', 'OI change for BTC'],
+  },
+  {
+    path: '/api/oi-spike-scan',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_OI_SPIKE_SCAN',
+    similes: ['OI_SPIKE_SCAN', 'GET_OI_SPIKE_SCAN'],
+    description:
+      'Abnormal open-interest jumps across ~600 USDT perps vs a 30min+ baseline — where new leverage is piling in, with funding and price context. Squeeze/flush precursor screener.',
+    triggers: ['where is open interest spiking', 'any OI spikes across perps'],
+  },
+  {
+    path: '/api/long-short',
+    usd: 0.01,
+    action: 'AGENTFEED_GET_LONG_SHORT',
+    similes: ['LONG_SHORT', 'GET_LONG_SHORT'],
+    description:
+      'Long/short account ratio for ANY USDT perp with 1h and 24h trend (retail crowding gauge).',
+    triggers: ['long short ratio for SOL', 'are traders long or short WIF'],
+  },
+  {
+    path: '/api/basis',
+    usd: 0.01,
+    action: 'AGENTFEED_GET_BASIS',
+    similes: ['BASIS', 'GET_BASIS'],
+    description:
+      'Perp-vs-spot basis for any USDT pair: premium/discount %, contango/backwardation read, funding context.',
+    triggers: ['perp basis for SOL', 'is BTC in contango'],
+  },
+  {
+    path: '/api/volatility',
+    usd: 0.01,
+    action: 'AGENTFEED_GET_VOLATILITY',
+    similes: ['VOLATILITY', 'GET_VOLATILITY'],
+    description:
+      'Realized volatility for any USDT perp: 7d and 30d annualized from daily closes, plus today\'s range. Position-sizing input.',
+    triggers: ['realized vol for SOL', 'how volatile is BTC'],
+  },
+  {
+    path: '/api/funding-history',
+    usd: 0.005,
+    action: 'AGENTFEED_GET_FUNDING_HISTORY',
+    similes: ['FUNDING_HISTORY', 'GET_FUNDING_HISTORY'],
+    description:
+      'Funding-rate history for any USDT perp (up to 200 intervals): average, annualized, share of positive intervals — what the carry has actually been.',
+    triggers: ['funding history for SOL', 'average carry on BTC perp'],
+  },
+  {
+    path: '/api/top-movers',
+    usd: 0.01,
+    action: 'AGENTFEED_GET_TOP_MOVERS',
+    similes: ['TOP_MOVERS', 'GET_TOP_MOVERS'],
+    description:
+      '24h top gainers and losers across ~600 USDT perps with a liquidity floor, funding attached. The "what moved" screener.',
+    triggers: ['top gainers and losers today', 'what perps are moving most'],
+  },
+  {
+    path: '/api/orderbook-imbalance',
+    usd: 0.01,
+    action: 'AGENTFEED_GET_ORDERBOOK_IMBALANCE',
+    similes: ['ORDERBOOK_IMBALANCE', 'GET_ORDERBOOK_IMBALANCE'],
+    description:
+      'Bid/ask resting-liquidity imbalance within ±N bps of mid for any USDT perp: USD each side, ratio, skew read.',
+    triggers: ['order book imbalance for SOL', 'is the SOL book bid or ask heavy'],
+  },
+  {
+    path: '/api/orderbook-walls',
+    usd: 0.01,
+    action: 'AGENTFEED_GET_ORDERBOOK_WALLS',
+    similes: ['ORDERBOOK_WALLS', 'GET_ORDERBOOK_WALLS'],
+    description:
+      'Largest resting orders each side of the book for any USDT perp, with USD size and distance from mid.',
+    triggers: ['order book walls on SOL', 'biggest resting orders for BTC'],
+  },
+  {
+    path: '/api/whale-trades',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_WHALE_TRADES',
+    similes: ['WHALE_TRADES', 'GET_WHALE_TRADES'],
+    description:
+      'Large prints from the live trade tape for any USDT perp: trades over a USD threshold, buy/sell totals, net flow, dominant side.',
+    triggers: ['any whale trades on SOL', 'large prints for BTC'],
+  },
+  {
+    path: '/api/spread-arb',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_SPREAD_ARB',
+    similes: ['SPREAD_ARB', 'GET_SPREAD_ARB'],
+    description:
+      'Best bid/ask for a USDT perp across Bybit, OKX and Hyperliquid, with the best cross-venue edge in bps (pre-fee).',
+    triggers: ['spread across venues for SOL', 'cross-exchange arb on WIF'],
+  },
+  {
+    path: '/api/token-holders/:mint',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_TOKEN_HOLDERS',
+    similes: ['TOKEN_HOLDERS', 'GET_TOKEN_HOLDERS'],
+    description:
+      'Top holders of any SPL token with per-account share and top1/top5/top10 concentration. Deeper cut than get_token_risk\'s summary.',
+    triggers: ['top holders of <mint>', 'holder concentration for <mint>'],
+    param: 'mint',
+  },
+  {
+    path: '/api/wallet-activity/:wallet',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_WALLET_ACTIVITY',
+    similes: ['WALLET_ACTIVITY', 'GET_WALLET_ACTIVITY'],
+    description:
+      'Recent transactions of any Solana wallet, parsed human-readable: type, protocol, description, fee, failures (Helius enhanced).',
+    triggers: ['recent activity for <address>', 'what has <address> been doing'],
+    param: 'wallet',
+  },
+  {
+    path: '/api/priority-fees',
+    usd: 0.005,
+    action: 'AGENTFEED_GET_PRIORITY_FEES',
+    similes: ['PRIORITY_FEES', 'GET_PRIORITY_FEES'],
+    description:
+      'Solana priority-fee estimate right now, all levels (min to unsafeMax) in micro-lamports/CU, with a recommended tip. For bots that need txs to land.',
+    triggers: ['solana priority fee right now', 'what should I tip to land a tx'],
+  },
+  {
+    path: '/api/jito-tips',
+    usd: 0.005,
+    action: 'AGENTFEED_GET_JITO_TIPS',
+    similes: ['JITO_TIPS', 'GET_JITO_TIPS'],
+    description:
+      'Jito bundle tip floor percentiles (p25-p99, SOL) — what landed bundles are actually paying, with a landing recommendation.',
+    triggers: ['jito tip floor', 'what are bundles paying'],
+  },
+  {
+    path: '/api/sol-network',
+    usd: 0.005,
+    action: 'AGENTFEED_GET_SOL_NETWORK',
+    similes: ['SOL_NETWORK', 'GET_SOL_NETWORK'],
+    description:
+      'Solana network health: recent average TPS, current slot, epoch and epoch progress.',
+    triggers: ['solana network health', 'current TPS on solana'],
+  },
+  {
+    path: '/api/tvl',
+    usd: 0.005,
+    action: 'AGENTFEED_GET_TVL',
+    similes: ['TVL', 'GET_TVL'],
+    description:
+      'TVL for any DeFi protocol (with 1d/7d change) or top-15 chains ranking. DefiLlama-backed.',
+    triggers: ['TVL of jito', 'top chains by TVL'],
+  },
+  {
+    path: '/api/stablecoin-flows',
+    usd: 0.01,
+    action: 'AGENTFEED_GET_STABLECOIN_FLOWS',
+    similes: ['STABLECOIN_FLOWS', 'GET_STABLECOIN_FLOWS'],
+    description:
+      'Total stablecoin supply with 7d/30d deltas and top stables — the macro risk-on/risk-off dial for crypto.',
+    triggers: ['stablecoin supply trend', 'is stablecoin supply growing'],
+  },
+  {
+    path: '/api/dex-quote',
+    usd: 0.005,
+    action: 'AGENTFEED_GET_DEX_QUOTE',
+    similes: ['DEX_QUOTE', 'GET_DEX_QUOTE'],
+    description:
+      'Live Jupiter swap quote for any SPL pair: output amount, price impact, route. The real executable price on Solana, not an index price.',
+    triggers: ['jupiter quote for <mint>', 'swap price on solana'],
+  },
 ];
 
 /** Base58 Solana address matcher (32–44 chars, no 0OIl). */
