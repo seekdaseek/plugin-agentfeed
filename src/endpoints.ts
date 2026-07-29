@@ -17,7 +17,7 @@ export interface EndpointDef {
   /** Natural-language examples that should trigger this action. */
   triggers: string[];
   /** Which param the path needs, if any. */
-  param?: 'mint' | 'wallet';
+  param?: 'mint' | 'wallet' | 'symbol';
 }
 
 export const ENDPOINTS: EndpointDef[] = [
@@ -427,7 +427,39 @@ export const ENDPOINTS: EndpointDef[] = [
       'Live Jupiter swap quote for any SPL pair: output amount, price impact, route. The real executable price on Solana, not an index price.',
     triggers: ['jupiter quote for <mint>', 'swap price on solana'],
   },
+  {
+    path: '/api/peg-universe',
+    usd: 0.05,
+    action: 'AGENTFEED_GET_PEG_UNIVERSE',
+    similes: ['PEG_UNIVERSE', 'TOKENIZED_STOCK_PEGS', 'RWA_PEG_RANKING', 'WHICH_XSTOCKS_DEPEG'],
+    description:
+      'Rank every tokenized US equity we track by off-hours peg risk ($0.05): p95 and max deviation in bps, market-open deviation as a control, and median pool liquidity. Sampled every 5 minutes by our own collector since 19 July 2026 — this tape exists nowhere else. Deviation is measured against the underlying last real trade; outside US market hours that is the last print before the close, not a live quote. Dead pools are excluded rather than reported as perfect pegs. Use when the agent needs to know which tokenized stocks are unreliable while the market is shut.',
+    triggers: ['which tokenized stocks depeg', 'rank xstocks by peg risk', 'rwa peg overview'],
+  },
+  {
+    path: '/api/peg-deviation?symbol=:symbol',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_PEG_DEVIATION',
+    similes: ['PEG_DEVIATION', 'TOKENIZED_STOCK_PEG', 'XSTOCK_PEG'],
+    description:
+      'Current peg deviation for one tokenized US equity on Solana ($0.02): on-chain DEX price vs the underlying last real trade in bps, direction, pool liquidity, plus window stats split into market-open and off-hours. Deviation is measured against the last real trade — off-hours that is the last print before the close, not a live quote.',
+    triggers: ['peg deviation for <symbol>', 'is <symbol> tracking its underlying', 'how far off is <symbol>'],
+    param: 'symbol',
+  },
+  {
+    path: '/api/peg-sessions?symbol=:symbol',
+    usd: 0.03,
+    action: 'AGENTFEED_GET_PEG_SESSIONS',
+    similes: ['PEG_SESSIONS', 'PEG_BY_SESSION', 'WHEN_DOES_IT_DEPEG'],
+    description:
+      'Peg deviation for one tokenized equity broken out by trading session ($0.03) — open, premarket, afterhours, overnight, weekend — with mean, p95, max bps and median liquidity per session, and the worst off-hours window flagged. The open session acts as a control: tight deviation there means the off-hours numbers are signal rather than measurement noise.',
+    triggers: ['when does <symbol> depeg', 'peg by session for <symbol>', 'weekend peg for <symbol>'],
+    param: 'symbol',
+  },
 ];
+
+/** Tokenized-equity ticker matcher, e.g. CRCLx, MSTRx, TSLAx. */
+export const SYMBOL_RE = /\b[A-Z]{1,6}x\b/;
 
 /** Base58 Solana address matcher (32–44 chars, no 0OIl). */
 export const BASE58_RE = /\b[1-9A-HJ-NP-Za-km-z]{32,44}\b/;

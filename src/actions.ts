@@ -11,13 +11,13 @@ import type {
   State,
 } from '@elizaos/core';
 import { AgentFeedService } from './service.js';
-import { ENDPOINTS, BASE58_RE, type EndpointDef } from './endpoints.js';
+import { ENDPOINTS, BASE58_RE, SYMBOL_RE, type EndpointDef } from './endpoints.js';
 
 function buildExamples(def: EndpointDef): ActionExample[][] {
   return def.triggers.slice(0, 2).map((t) => [
     {
       name: '{{user1}}',
-      content: { text: t.replace('<mint>', 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v').replace('<address>', '4a8o45skRPcyjAdyR8yES215Swvh8uTpZD6KLarhxCJ7') },
+      content: { text: t.replace('<mint>', 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v').replace('<address>', '4a8o45skRPcyjAdyR8yES215Swvh8uTpZD6KLarhxCJ7').replace('<symbol>', 'CRCLx') },
     },
     {
       name: '{{agent}}',
@@ -37,6 +37,7 @@ function makeAction(def: EndpointDef): Action {
 
     validate: async (_runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
       const text = message?.content?.text ?? '';
+      if (def.param === 'symbol') return SYMBOL_RE.test(text);
       if (def.param) return BASE58_RE.test(text);
       return true;
     },
@@ -58,10 +59,14 @@ function makeAction(def: EndpointDef): Action {
 
       let path = def.path;
       if (def.param) {
-        const m = (message?.content?.text ?? '').match(BASE58_RE);
+        const re = def.param === 'symbol' ? SYMBOL_RE : BASE58_RE;
+        const m = (message?.content?.text ?? '').match(re);
         if (!m) {
           await callback?.({
-            text: `I need a Solana ${def.param} address in the message to run this lookup.`,
+            text:
+              def.param === 'symbol'
+                ? 'I need a tokenized equity symbol like CRCLx or MSTRx in the message to run this lookup.'
+                : `I need a Solana ${def.param} address in the message to run this lookup.`,
           });
           return false;
         }
