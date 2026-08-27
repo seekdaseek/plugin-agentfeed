@@ -144,7 +144,7 @@ export const ENDPOINTS: EndpointDef[] = [
     action: 'AGENTFEED_GET_SOL_PRICE',
     similes: ['GET_SOL_PRICE', 'SOL_PRICE'],
     description:
-      'Fetch live SOL spot price via Pyth ($0.001). Use for a plain SOL price check.',
+      'Fetch live SOL spot price ($0.001). Use for a plain SOL price check.',
     triggers: ["what's SOL trading at", 'SOL price'],
   },
   {
@@ -153,7 +153,7 @@ export const ENDPOINTS: EndpointDef[] = [
     action: 'AGENTFEED_GET_BTC_PRICE',
     similes: ['GET_BTC_PRICE', 'BTC_PRICE'],
     description:
-      'Fetch live BTC spot price via Pyth ($0.001). Use for a plain BTC price check.',
+      'Fetch live BTC spot price ($0.001). Use for a plain BTC price check.',
     triggers: ["what's bitcoin at", 'BTC price'],
   },
   {

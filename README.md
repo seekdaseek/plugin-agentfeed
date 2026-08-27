@@ -4,7 +4,7 @@ Live crypto market data for [elizaOS](https://github.com/elizaOS/eliza) trading 
 
 No API keys. No subscriptions. No signup. Your agent holds a wallet, and pays $0.001–$0.01 per call only when it actually needs data.
 
-Backed by [AgentFeed](https://x402.ochinimus.app) — multi-exchange liquidation collection (Bybit + OKX WebSocket), Bybit v5 positioning, Pyth prices, and Helius DAS on-chain data.
+Backed by [AgentFeed](https://x402.ochinimus.app) — multi-exchange liquidation collection (Bybit + OKX WebSocket), Bybit v5 positioning, spot prices (multi-source: Coinbase, Kraken, Pyth Hermes fallback), and Helius DAS on-chain data.
 
 ## What your agent can ask for
 
@@ -16,8 +16,8 @@ Backed by [AgentFeed](https://x402.ochinimus.app) — multi-exchange liquidation
 | `AGENTFEED_GET_POSITIONING` | Long/short ratio + open interest with 1h/24h deltas | $0.004 |
 | `AGENTFEED_GET_FUNDING_RATE` | SOL + BTC perp funding rates | $0.002 |
 | `AGENTFEED_GET_MARKET_SNAPSHOT` | Compact market snapshot | $0.003 |
-| `AGENTFEED_GET_SOL_PRICE` | SOL spot via Pyth | $0.001 |
-| `AGENTFEED_GET_BTC_PRICE` | BTC spot via Pyth | $0.001 |
+| `AGENTFEED_GET_SOL_PRICE` | SOL spot price | $0.001 |
+| `AGENTFEED_GET_BTC_PRICE` | BTC spot price | $0.001 |
 | `AGENTFEED_GET_TOKEN_RISK` | Rug-risk scan: mint/freeze authority, holder concentration | $0.01 |
 | `AGENTFEED_GET_TOKEN_METADATA` | SPL token metadata via Helius DAS | $0.005 |
 | `AGENTFEED_GET_WALLET_HOLDINGS` | Wallet portfolio via Helius DAS | $0.008 |
