@@ -456,6 +456,25 @@ export const ENDPOINTS: EndpointDef[] = [
     triggers: ['when does <symbol> depeg', 'peg by session for <symbol>', 'weekend peg for <symbol>'],
     param: 'symbol',
   },
+  {
+    path: '/api/exit-quote?symbol=:symbol',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_EXIT_QUOTE',
+    similes: ['EXIT_QUOTE', 'COLLATERAL_EXIT', 'LIQUIDATION_HAIRCUT', 'CAN_I_SELL_THIS'],
+    description:
+      'What a lending reserve would actually realise if it had to be seized and sold ($0.02): the protocol oracle mark, the realisable value measured by live routing at real clip sizes, the haircut in bps, and whether the liquidation bonus covers the cost of selling. Measured every 15 minutes against Solana lending markets since 11 August 2026 by our own collector; this tape exists nowhere else. Returns the nearest clip the ladder actually probed, never an interpolation. A terminal no-exit verdict requires six consecutive agreeing observations from that symbol own tape, so one bad quote cannot become a finding. Never returns null: an unconfirmed sample falls back to the last corroborated measurement with its age.',
+    triggers: ['what would <symbol> realise if liquidated', 'exit quote for <symbol>', 'can this collateral actually be sold', 'liquidation haircut for <symbol>'],
+    param: 'symbol',
+  },
+  {
+    path: '/api/exit-method',
+    usd: 0,
+    action: 'AGENTFEED_GET_EXIT_METHOD',
+    similes: ['EXIT_METHOD', 'HOW_IS_EXIT_MEASURED', 'COLLATERAL_METHODOLOGY'],
+    description:
+      'FREE: exactly how the collateral exit measurements are produced, so the numbers can be checked rather than trusted. Marked value versus realisable value, the corroboration rule, the status vocabulary including why a router refusing a token outright is permissioning and not illiquidity, the size-matched control design, and the live row and sweep counts computed at request time. Read this before paying for a quote.',
+    triggers: ['how is exit liquidity measured', 'collateral methodology', 'how do you know this collateral cannot be sold'],
+  },
 ];
 
 /** Tokenized-equity ticker matcher, e.g. CRCLx, MSTRx, TSLAx. */

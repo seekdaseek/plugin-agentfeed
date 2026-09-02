@@ -10,6 +10,8 @@ Backed by [AgentFeed](https://x402.ochinimus.app) — multi-exchange liquidation
 
 | Action | Data | Price |
 |---|---|---|
+| `AGENTFEED_GET_EXIT_QUOTE` | What a lending reserve would realise if seized and sold: oracle mark vs live-routed realisable value, haircut in bps, whether the liquidation bonus covers it | $0.02 |
+| `AGENTFEED_GET_EXIT_METHOD` | How those exit measurements are produced, so they can be checked rather than trusted | free |
 | `AGENTFEED_GET_TRADE_CONTEXT` | Full market state: prices, funding, fear/greed, positioning, liquidations | $0.01 |
 | `AGENTFEED_GET_LIQUIDATIONS` | Recent SOL/BTC liquidation prints, filterable | $0.003 |
 | `AGENTFEED_GET_LIQUIDATION_STATS` | 1h/24h totals, long/short split, biggest print | $0.004 |

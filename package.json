@@ -1,7 +1,7 @@
 {
   "name": "@seekdaseek/plugin-agentfeed",
-  "version": "0.4.1",
-  "description": "elizaOS plugin for AgentFeed \u2014 paid crypto liquidation data over x402 micropayments on Solana. Full-universe cascade detection across ~600 USDT perps on Bybit, OKX and Binance, plus positioning, funding, prices and token risk. $0.001\u2013$0.05 per call in USDC, no API keys, no subscriptions.",
+  "version": "0.5.0",
+  "description": "elizaOS plugin for AgentFeed — paid crypto and Solana data over x402 micropayments. Collateral exit liquidity measured against live routing, full-universe liquidation cascade detection across ~600 USDT perps on Bybit, OKX and Binance, tokenized-equity peg deviation, plus positioning, funding, prices and token risk. $0.001–$0.05 per call in USDC, no API keys.",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
