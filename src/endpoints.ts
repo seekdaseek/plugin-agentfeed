@@ -27,7 +27,7 @@ export const ENDPOINTS: EndpointDef[] = [
     action: 'AGENTFEED_GET_CASCADE_SCAN',
     similes: ['CASCADE_SCAN', 'FULL_CASCADE_SCAN', 'SCAN_ALL_LIQUIDATIONS', 'WHAT_IS_CASCADING'],
     description:
-      'Scan for liquidation cascades across the FULL universe of ~600 USDT perps on Bybit, OKX and Binance simultaneously ($0.05) — not just the majors. Returns each active cascade: symbol, side liquidated, USD total, print count, duration, severity (minor/major/extreme). Bybit is the only complete unthrottled liquidation tape in crypto and no exchange publishes history of it, so this coverage is not available anywhere else. Use when the agent needs to know what is blowing up across the whole market, including alts it is not already watching.',
+      'Scan for liquidation cascades across the FULL universe of every USDT perp we record on Bybit, OKX and Binance simultaneously ($0.05) — not just the majors. Returns each active cascade: symbol, side liquidated, USD total, print count, duration, severity (minor/major/extreme). Bybit is the only complete unthrottled liquidation tape in crypto and no exchange publishes history of it, so this coverage is not available anywhere else. Use when the agent needs to know what is blowing up across the whole market, including alts it is not already watching.',
     triggers: [
       'is anything cascading right now',
       'scan the whole market for liquidation cascades',
@@ -41,7 +41,7 @@ export const ENDPOINTS: EndpointDef[] = [
     action: 'AGENTFEED_GET_LIQUIDATION_LEADERS',
     similes: ['LIQUIDATION_LEADERS', 'WHATS_GETTING_REKT', 'TOP_LIQUIDATIONS'],
     description:
-      'Rank the top symbols by liquidation USD right now across ~600 USDT perps on Bybit, OKX and Binance ($0.02). Per symbol: total liquidated, long vs short split, biggest single print, venue count, dominant side. The fastest read on where leverage is being flushed.',
+      'Rank the top symbols by liquidation USD right now across every USDT perp we record on Bybit, OKX and Binance ($0.02). Per symbol: total liquidated, long vs short split, biggest single print, venue count, dominant side. The fastest read on where leverage is being flushed.',
     triggers: [
       'what is getting rekt right now',
       'which coins have the most liquidations today',
@@ -54,7 +54,7 @@ export const ENDPOINTS: EndpointDef[] = [
     action: 'AGENTFEED_GET_CASCADE_ALERT',
     similes: ['CASCADE_ALERT', 'IS_THERE_A_CASCADE'],
     description:
-      'Liquidation cascade detector for the 5 majors — SOL, BTC, ETH, XRP, DOGE — across Bybit, OKX and Binance ($0.01). Returns cascades active NOW: clustered same-side liquidations with symbol, side, USD total, prints, duration, severity. Empty array = no cascade in the window. For all ~600 perps use AGENTFEED_GET_CASCADE_SCAN instead.',
+      'Liquidation cascade detector for the 5 majors — SOL, BTC, ETH, XRP, DOGE — across Bybit, OKX and Binance ($0.01). Returns cascades active NOW: clustered same-side liquidations with symbol, side, USD total, prints, duration, severity. Empty array = no cascade in the window. For every perp we record use AGENTFEED_GET_CASCADE_SCAN instead.',
     triggers: [
       'is SOL cascading',
       'is there a liquidation cascade on BTC right now',
@@ -81,7 +81,7 @@ export const ENDPOINTS: EndpointDef[] = [
     action: 'AGENTFEED_GET_LIQUIDATIONS',
     similes: ['GET_RECENT_LIQUIDATIONS', 'RECENT_LIQUIDATIONS', 'LIQUIDATION_FEED'],
     description:
-      'Fetch recent perp liquidation prints ($0.003) across ~600 USDT perps on Bybit (complete unthrottled tape), OKX and Binance: side, size, price, exchange, timestamp. Filterable by symbol — any USDT perp, not just majors. Use for questions about recent liquidations or big prints.',
+      'Fetch recent perp liquidation prints ($0.003) across every USDT perp we record on Bybit (complete unthrottled tape), OKX and Binance: side, size, price, exchange, timestamp. Filterable by symbol — any USDT perp, not just majors. Use for questions about recent liquidations or big prints.',
     triggers: [
       'any big liquidations in the last hour',
       'show me recent SOL liquidations',
@@ -206,7 +206,7 @@ export const ENDPOINTS: EndpointDef[] = [
     action: 'AGENTFEED_GET_LIQ_HISTORY',
     similes: ['LIQ_HISTORY', 'GET_LIQ_HISTORY'],
     description:
-      'HISTORICAL liquidation tape, time-bucketed: total/long/short USD, prints, biggest print per bucket. Any USDT perp or the whole ~600-perp universe, up to 7 days back. Bybit is the only complete liq tape in crypto and no exchange publishes history of it — this data exists nowhere else.',
+      'HISTORICAL liquidation tape, time-bucketed: total/long/short USD, prints, biggest print per bucket. Any USDT perp or the whole recorded universe, up to 7 days back. Bybit is the only complete liq tape in crypto and no exchange publishes history of it — this data exists nowhere else.',
     triggers: ['liquidation history for SOL over the last day', 'how much got liquidated per hour today'],
   },
   {
@@ -251,7 +251,7 @@ export const ENDPOINTS: EndpointDef[] = [
     action: 'AGENTFEED_GET_FUNDING_EXTREMES',
     similes: ['FUNDING_EXTREMES', 'GET_FUNDING_EXTREMES'],
     description:
-      'Most crowded trades across ~600 USDT perps: top most-positive and most-negative funding with annualized %, 24h price move and OI. Crowded shorts = squeeze candidates.',
+      'Most crowded trades across every Bybit USDT perp: top most-positive and most-negative funding with annualized %, 24h price move and OI. Crowded shorts = squeeze candidates.',
     triggers: ['most crowded funding trades right now', 'which perps have extreme funding'],
   },
   {
@@ -269,7 +269,7 @@ export const ENDPOINTS: EndpointDef[] = [
     action: 'AGENTFEED_GET_OI_SPIKE_SCAN',
     similes: ['OI_SPIKE_SCAN', 'GET_OI_SPIKE_SCAN'],
     description:
-      'Abnormal open-interest jumps across ~600 USDT perps vs a 30min+ baseline — where new leverage is piling in, with funding and price context. Squeeze/flush precursor screener.',
+      'Abnormal open-interest jumps across every Bybit USDT perp vs a 30min+ baseline — where new leverage is piling in, with funding and price context. Squeeze/flush precursor screener.',
     triggers: ['where is open interest spiking', 'any OI spikes across perps'],
   },
   {
@@ -314,7 +314,7 @@ export const ENDPOINTS: EndpointDef[] = [
     action: 'AGENTFEED_GET_TOP_MOVERS',
     similes: ['TOP_MOVERS', 'GET_TOP_MOVERS'],
     description:
-      '24h top gainers and losers across ~600 USDT perps with a liquidity floor, funding attached. The "what moved" screener.',
+      '24h top gainers and losers across every Bybit USDT perp with a liquidity floor, funding attached. The "what moved" screener.',
     triggers: ['top gainers and losers today', 'what perps are moving most'],
   },
   {

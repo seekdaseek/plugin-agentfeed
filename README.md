@@ -2,7 +2,7 @@
 
 Live crypto market data for [elizaOS](https://github.com/elizaOS/eliza) trading agents, paid per-call in USDC over the [x402 protocol](https://x402.org) on Solana.
 
-No API keys. No subscriptions. No signup. Your agent holds a wallet, and pays $0.001–$0.01 per call only when it actually needs data.
+No API keys. No subscriptions. No signup. Your agent holds a wallet, and pays $0.001–$0.10 per call only when it actually needs data.
 
 Backed by [AgentFeed](https://x402.ochinimus.app) — multi-exchange liquidation collection (Bybit + OKX WebSocket), Bybit v5 positioning, spot prices (multi-source: Coinbase, Kraken, Pyth Hermes fallback), and Helius DAS on-chain data.
 
