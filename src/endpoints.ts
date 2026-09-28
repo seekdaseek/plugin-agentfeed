@@ -18,6 +18,8 @@ export interface EndpointDef {
   triggers: string[];
   /** Which param the path needs, if any. */
   param?: 'mint' | 'wallet' | 'symbol' | 'address';
+  /** An optional query param, sent only when the message names one: 'perp' adds ?symbol= for a USDT perp. */
+  optional?: 'perp';
 }
 
 export const ENDPOINTS: EndpointDef[] = [
@@ -120,11 +122,13 @@ export const ENDPOINTS: EndpointDef[] = [
     action: 'AGENTFEED_GET_FUNDING_RATE',
     similes: ['GET_FUNDING_RATE', 'FUNDING_RATES', 'PERP_FUNDING'],
     description:
-      'Fetch current SOL and BTC perp funding rates ($0.002). Use for funding questions or carry-cost checks.',
+      'Funding rate for any USDT perp on Bybit, OKX and Hyperliquid ($0.002): per venue the raw rate, its interval in hours, the 8h equivalent, the annualised rate, next funding time and mark price. Name the perp (e.g. ETHUSDT) in the message; without one it returns SOL and BTC from Hyperliquid.',
     triggers: [
+      "what's the funding rate on ETHUSDT",
       "what's SOL funding right now",
       'are funding rates positive or negative',
     ],
+    optional: 'perp',
   },
   {
     path: '/api/market-snapshot',
@@ -557,6 +561,13 @@ export const ENDPOINTS: EndpointDef[] = [
 
 /** Tokenized-equity ticker matcher, e.g. CRCLx, MSTRx, TSLAx. */
 export const SYMBOL_RE = /\b[A-Z]{1,6}x\b/;
+
+/**
+ * USDT perp matcher, e.g. ETHUSDT, ONDOUSDT, 1000PEPEUSDT, ETH-USDT, ETH/USDT. Only a
+ * symbol written with its USDT quote counts: a bare ticker like "SOL" is not taken
+ * as one, so "SOL and BTC funding" still asks for the pair.
+ */
+export const PERP_RE = /\b([A-Z0-9]{2,20})[-/]?USDT\b/;
 
 /** Base58 Solana address matcher (32–44 chars, no 0OIl). */
 export const BASE58_RE = /\b[1-9A-HJ-NP-Za-km-z]{32,44}\b/;

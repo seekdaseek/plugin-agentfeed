@@ -17,7 +17,7 @@ Backed by [AgentFeed](https://x402.ochinimus.app) — multi-exchange liquidation
 | `AGENTFEED_GET_LIQUIDATIONS` | Fetch recent perp liquidation prints across every USDT perp we record on Bybit (complete unthrottled tape), OKX and Binance: side, size, price, exchange, timestamp. | $0.003 |
 | `AGENTFEED_GET_LIQUIDATION_STATS` | Fetch aggregated liquidation stats: 1h/24h totals, long vs short split, biggest single print. | $0.004 |
 | `AGENTFEED_GET_POSITIONING` | Fetch SOL+BTC long/short account ratio and open interest with 1h/24h OI deltas. | $0.004 |
-| `AGENTFEED_GET_FUNDING_RATE` | Fetch current SOL and BTC perp funding rates. | $0.002 |
+| `AGENTFEED_GET_FUNDING_RATE` | Funding rate for any USDT perp on Bybit, OKX and Hyperliquid: per venue the raw rate, its interval in hours, the 8h equivalent, the annualised rate, next funding time and mark price. | $0.002 |
 | `AGENTFEED_GET_MARKET_SNAPSHOT` | Fetch a compact market snapshot: SOL+BTC prices plus key market gauges in one call. | $0.003 |
 | `AGENTFEED_GET_SOL_PRICE` | Fetch live SOL spot price. | $0.001 |
 | `AGENTFEED_GET_BTC_PRICE` | Fetch live BTC spot price. | $0.001 |
