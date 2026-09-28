@@ -55,6 +55,14 @@ Backed by [AgentFeed](https://x402.ochinimus.app) — multi-exchange liquidation
 | `AGENTFEED_GET_PEG_SESSIONS` | Peg deviation for one tokenized equity broken out by trading session — open, premarket, afterhours, overnight, weekend — with mean, p95, max bps and median liquidity per session, and the worst off-hours window flagged. | $0.03 |
 | `AGENTFEED_GET_EXIT_QUOTE` | What a lending reserve would actually realise if it had to be seized and sold: the protocol oracle mark, the realisable value measured by live routing at real clip sizes, the haircut in bps, and whether the liquidation bonus covers the cost of selling. | $0.02 |
 | `AGENTFEED_GET_EXIT_METHOD` | FREE: exactly how the collateral exit measurements are produced, so the numbers can be checked rather than trusted. | free |
+| `AGENTFEED_GET_ETH_PRICE` | ETH spot price in USD, aggregated across seven independent venues (CoinGecko, Coinbase, Kraken, Binance, OKX, Gemini, DefiLlama). | $0.001 |
+| `AGENTFEED_GET_BASE_GAS` | Current gas price on Base, chain 8453, in BOTH gwei and wei, with base fee, priority fee and block number when the node supplies them. | $0.001 |
+| `AGENTFEED_GET_BASE_BALANCE` | Native ETH or any ERC20 balance for an address on Base or Ethereum mainnet. | $0.002 |
+| `AGENTFEED_GET_CASCADE_FORECAST` | FORWARD-LOOKING liquidation forecast, not a description of what already happened: the probability that a symbol liquidates more in the NEXT 15 minutes than its own 90th-percentile window. | $0.02 |
+| `AGENTFEED_GET_PERP` | Use when an agent needs one perp market in a single call. | $0.001 |
+| `AGENTFEED_GET_LIQ_PULSE` | Use when an agent needs to know what is being liquidated right now. | $0.001 |
+| `AGENTFEED_GET_FUNDING_PULSE` | Use when an agent needs the most extreme funding rates right now. | $0.001 |
+| `AGENTFEED_GET_SPOT` | Use when an agent needs a spot price without choosing a venue. | $0.001 |
 
 ## Quickstart
 

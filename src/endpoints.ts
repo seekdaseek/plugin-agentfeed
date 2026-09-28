@@ -17,7 +17,7 @@ export interface EndpointDef {
   /** Natural-language examples that should trigger this action. */
   triggers: string[];
   /** Which param the path needs, if any. */
-  param?: 'mint' | 'wallet' | 'symbol';
+  param?: 'mint' | 'wallet' | 'symbol' | 'address';
 }
 
 export const ENDPOINTS: EndpointDef[] = [
@@ -475,6 +475,84 @@ export const ENDPOINTS: EndpointDef[] = [
       'FREE: exactly how the collateral exit measurements are produced, so the numbers can be checked rather than trusted. Marked value versus realisable value, the corroboration rule, the status vocabulary including why a router refusing a token outright is permissioning and not illiquidity, the size-matched control design, and the live row and sweep counts computed at request time. Read this before paying for a quote.',
     triggers: ['how is exit liquidity measured', 'collateral methodology', 'how do you know this collateral cannot be sold'],
   },
+  // ---- Base / EVM reads, added 2026-09-20 ----
+  // These three existed on the server only behind an unmetered mirror until
+  // 2026-09-19; they are now first-class paid routes.
+  {
+    path: '/api/eth-price',
+    usd: 0.001,
+    action: 'AGENTFEED_GET_ETH_PRICE',
+    similes: ['ETH_PRICE', 'GET_ETH_PRICE', 'PRICE_OF_ETH'],
+    description:
+      'ETH spot price in USD ($0.001), aggregated across seven independent venues (CoinGecko, Coinbase, Kraken, Binance, OKX, Gemini, DefiLlama). Returns the lead figure plus every venue quote that answered, so the spread is visible rather than hidden behind one exchange.',
+    triggers: ['what is ETH trading at', 'price of ethereum right now'],
+  },
+  {
+    path: '/api/base-gas',
+    usd: 0.001,
+    action: 'AGENTFEED_GET_BASE_GAS',
+    similes: ['BASE_GAS', 'GAS_PRICE_ON_BASE', 'L2_GAS'],
+    description:
+      'Current gas price on Base, chain 8453, in BOTH gwei and wei ($0.001), with base fee, priority fee and block number when the node supplies them. Served from keyless public RPC with three-node fallback.',
+    triggers: ['what is gas on Base right now', 'Base gas price in gwei'],
+  },
+  {
+    path: '/api/base-balance?address=:address',
+    usd: 0.002,
+    action: 'AGENTFEED_GET_BASE_BALANCE',
+    similes: ['BASE_BALANCE', 'ETH_BALANCE', 'ERC20_BALANCE', 'WALLET_BALANCE_ON_BASE'],
+    description:
+      'Native ETH or any ERC20 balance for an address on Base or Ethereum mainnet ($0.002). decimals() and symbol() are read from the contract at request time rather than assumed. Accepts a 0x address or an ENS name; ENS is resolved through two independent resolvers and used only when they agree.',
+    triggers: ['what is the ETH balance of 0x<address> on Base', 'USDC balance of 0x<address>'],
+    param: 'address',
+  },
+  {
+    path: '/api/cascade-forecast',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_CASCADE_FORECAST',
+    similes: ['CASCADE_FORECAST', 'WILL_IT_CASCADE', 'LIQUIDATION_FORECAST'],
+    description:
+      'FORWARD-LOOKING liquidation forecast ($0.02), not a description of what already happened: the probability that a symbol liquidates more in the NEXT 15 minutes than its own 90th-percentile window. Calibrated on a 28-day tape of Bybit liquidations. Declines rather than guessing when a state has too little history.',
+    triggers: ['is SOL about to cascade', 'forecast liquidations for BTC'],
+  },
+  // ---- Entry tier, generated 2026-09-28 by gen-actions-from-spec.mjs from the live
+  // openapi.json, SKILL.md and MCP titles -- not written by hand. ----
+  {
+    path: '/api/perp',
+    usd: 0.001,
+    action: 'AGENTFEED_GET_PERP',
+    similes: ['PERP', 'GET_PERP'],
+    description:
+      'Use when an agent needs one perp market in a single call ($0.001). Returns cross-venue funding (Bybit, OKX, Hyperliquid), open interest with 1h/24h change, long/short ratio, and 24h liquidations with long/short split and biggest print from our own tape.',
+    triggers: ['what is this perp doing right now, in one call', 'perp snapshot'],
+  },
+  {
+    path: '/api/liq-pulse',
+    usd: 0.001,
+    action: 'AGENTFEED_GET_LIQ_PULSE',
+    similes: ['LIQ_PULSE', 'GET_LIQ_PULSE'],
+    description:
+      'Use when an agent needs to know what is being liquidated right now ($0.001). Returns the last 60 minutes across every USDT perp we record: total USD, long/short split, prints and the top 5 symbols. Declines with the tape age if our recording is stale.',
+    triggers: ['what is being liquidated right now', 'liquidation pulse'],
+  },
+  {
+    path: '/api/funding-pulse',
+    usd: 0.001,
+    action: 'AGENTFEED_GET_FUNDING_PULSE',
+    similes: ['FUNDING_PULSE', 'GET_FUNDING_PULSE'],
+    description:
+      'Use when an agent needs the most extreme funding rates right now ($0.001). Returns the 5 largest absolute annualised rates across the whole Bybit USDT perp universe, each with venue, 8h rate, open interest and 24h price move. One call, not a full screen.',
+    triggers: ['where is funding most extreme right now', 'funding pulse'],
+  },
+  {
+    path: '/api/price',
+    usd: 0.001,
+    action: 'AGENTFEED_GET_SPOT',
+    similes: ['SPOT', 'GET_SPOT'],
+    description:
+      'Use when an agent needs a spot price without choosing a venue ($0.001). Returns the price, the venue that actually served it, and a Pyth confidence when Pyth served. Coinbase, then Kraken, then Pyth Hermes. Serves SOL, BTC and ETH; anything else is declined.',
+    triggers: ['what is the spot price, without picking a venue', 'spot price'],
+  },
 ];
 
 /** Tokenized-equity ticker matcher, e.g. CRCLx, MSTRx, TSLAx. */
@@ -482,3 +560,7 @@ export const SYMBOL_RE = /\b[A-Z]{1,6}x\b/;
 
 /** Base58 Solana address matcher (32–44 chars, no 0OIl). */
 export const BASE58_RE = /\b[1-9A-HJ-NP-Za-km-z]{32,44}\b/;
+
+// Base / Ethereum addresses are 0x + 40 hex. BASE58_RE cannot match them, so the
+// EVM reads need their own pattern.
+export const EVM_RE = /0x[0-9a-fA-F]{40}/;

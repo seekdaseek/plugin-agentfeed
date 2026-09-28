@@ -1,6 +1,6 @@
 {
   "name": "@seekdaseek/plugin-agentfeed",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "elizaOS plugin for AgentFeed: paid crypto and Solana data over x402. Liquidation cascades on Bybit, OKX and Binance, funding, positioning, tokenized-stock peg deviation, collateral exit liquidity, token risk. $0.001–$0.10 per call in USDC, no API keys.",
   "type": "module",
   "main": "dist/index.js",
