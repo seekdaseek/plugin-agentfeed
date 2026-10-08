@@ -79,11 +79,11 @@ export const ENDPOINTS: EndpointDef[] = [
   },
   {
     path: '/api/liquidations',
-    usd: 0.003,
+    usd: 0.005,
     action: 'AGENTFEED_GET_LIQUIDATIONS',
     similes: ['GET_RECENT_LIQUIDATIONS', 'RECENT_LIQUIDATIONS', 'LIQUIDATION_FEED'],
     description:
-      'Fetch recent perp liquidation prints ($0.003) across every USDT perp we record on Bybit (complete unthrottled tape), OKX and Binance: side, size, price, exchange, timestamp. Filterable by symbol — any USDT perp, not just majors. Use for questions about recent liquidations or big prints.',
+      'Fetch recent perp liquidation prints ($0.005) across every USDT perp we record on Bybit (complete unthrottled tape), OKX and Binance: side, size, price, exchange, timestamp. Filterable by symbol — any USDT perp, not just majors. Use for questions about recent liquidations or big prints.',
     triggers: [
       'any big liquidations in the last hour',
       'show me recent SOL liquidations',
@@ -92,11 +92,11 @@ export const ENDPOINTS: EndpointDef[] = [
   },
   {
     path: '/api/liquidation-stats',
-    usd: 0.004,
+    usd: 0.01,
     action: 'AGENTFEED_GET_LIQUIDATION_STATS',
     similes: ['GET_LIQUIDATION_STATS', 'LIQUIDATION_TOTALS'],
     description:
-      'Fetch aggregated liquidation stats ($0.004): 1h/24h totals, long vs short split, biggest single print. Use for "how much got liquidated" style questions.',
+      'Fetch aggregated liquidation stats ($0.01): 1h/24h totals, long vs short split, biggest single print. Use for "how much got liquidated" style questions.',
     triggers: [
       'how much got liquidated today',
       'longs or shorts getting rekt more',
@@ -105,11 +105,11 @@ export const ENDPOINTS: EndpointDef[] = [
   },
   {
     path: '/api/positioning',
-    usd: 0.004,
+    usd: 0.005,
     action: 'AGENTFEED_GET_POSITIONING',
     similes: ['GET_POSITIONING', 'LONG_SHORT_RATIO', 'OPEN_INTEREST'],
     description:
-      'Fetch SOL+BTC long/short account ratio and open interest with 1h/24h OI deltas ($0.004). Use for positioning, crowding, or OI questions.',
+      'Fetch SOL+BTC long/short account ratio and open interest with 1h/24h OI deltas ($0.005). Use for positioning, crowding, or OI questions.',
     triggers: [
       "what's the long/short ratio on SOL",
       'is open interest rising or falling',
@@ -118,11 +118,11 @@ export const ENDPOINTS: EndpointDef[] = [
   },
   {
     path: '/api/funding-rate',
-    usd: 0.002,
+    usd: 0.005,
     action: 'AGENTFEED_GET_FUNDING_RATE',
     similes: ['GET_FUNDING_RATE', 'FUNDING_RATES', 'PERP_FUNDING'],
     description:
-      'Funding rate for any USDT perp on Bybit, OKX and Hyperliquid ($0.002): per venue the raw rate, its interval in hours, the 8h equivalent, the annualised rate, next funding time and mark price. Name the perp (e.g. ETHUSDT) in the message; without one it returns SOL and BTC from Hyperliquid.',
+      'Funding rate for any USDT perp on Bybit, OKX and Hyperliquid ($0.005): per venue the raw rate, its interval in hours, the 8h equivalent, the annualised rate, next funding time and mark price. Name the perp (e.g. ETHUSDT) in the message; without one it returns SOL and BTC from Hyperliquid.',
     triggers: [
       "what's the funding rate on ETHUSDT",
       "what's SOL funding right now",
@@ -132,11 +132,11 @@ export const ENDPOINTS: EndpointDef[] = [
   },
   {
     path: '/api/market-snapshot',
-    usd: 0.003,
+    usd: 0.005,
     action: 'AGENTFEED_GET_MARKET_SNAPSHOT',
     similes: ['GET_MARKET_SNAPSHOT', 'MARKET_SNAPSHOT'],
     description:
-      'Fetch a compact market snapshot ($0.003): SOL+BTC prices plus key market gauges in one call. Cheaper than trade-context; use for quick price/market checks that need more than a single price.',
+      'Fetch a compact market snapshot ($0.005): SOL+BTC prices plus key market gauges in one call. Cheaper than trade-context; use for quick price/market checks that need more than a single price.',
     triggers: [
       'quick market snapshot',
       "how's the market looking",
@@ -144,20 +144,20 @@ export const ENDPOINTS: EndpointDef[] = [
   },
   {
     path: '/api/sol-price',
-    usd: 0.001,
+    usd: 0.005,
     action: 'AGENTFEED_GET_SOL_PRICE',
     similes: ['GET_SOL_PRICE', 'SOL_PRICE'],
     description:
-      'Fetch live SOL spot price ($0.001). Use for a plain SOL price check.',
+      'Fetch live SOL spot price ($0.005). Use for a plain SOL price check.',
     triggers: ["what's SOL trading at", 'SOL price'],
   },
   {
     path: '/api/btc-price',
-    usd: 0.001,
+    usd: 0.005,
     action: 'AGENTFEED_GET_BTC_PRICE',
     similes: ['GET_BTC_PRICE', 'BTC_PRICE'],
     description:
-      'Fetch live BTC spot price ($0.001). Use for a plain BTC price check.',
+      'Fetch live BTC spot price ($0.005). Use for a plain BTC price check.',
     triggers: ["what's bitcoin at", 'BTC price'],
   },
   {
@@ -215,7 +215,7 @@ export const ENDPOINTS: EndpointDef[] = [
   },
   {
     path: '/api/liq-heatmap',
-    usd: 0.05,
+    usd: 0.02,
     action: 'AGENTFEED_GET_LIQ_HEATMAP',
     similes: ['LIQ_HEATMAP', 'GET_LIQ_HEATMAP'],
     description:
@@ -246,7 +246,7 @@ export const ENDPOINTS: EndpointDef[] = [
     action: 'AGENTFEED_GET_FUNDING_CROSS',
     similes: ['FUNDING_CROSS', 'GET_FUNDING_CROSS'],
     description:
-      'Funding for ANY USDT perp across Bybit + OKX + Hyperliquid in one call, with cross-venue spread and crowding read. (get_funding_rate covers SOL+BTC only.)',
+      'Funding for ANY USDT perp across Bybit + OKX + Hyperliquid in one call, with cross-venue spread and crowding read.',
     triggers: ['funding for SOL across exchanges', 'cross-venue funding on WIF'],
   },
   {
@@ -257,6 +257,15 @@ export const ENDPOINTS: EndpointDef[] = [
     description:
       'Most crowded trades across every Bybit USDT perp: top most-positive and most-negative funding with annualized %, 24h price move and OI. Crowded shorts = squeeze candidates.',
     triggers: ['most crowded funding trades right now', 'which perps have extreme funding'],
+  },
+  {
+    path: '/api/funding-radar',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_FUNDING_RADAR',
+    similes: ['FUNDING_RADAR', 'GET_FUNDING_RADAR'],
+    description:
+      'Funding rates radar across Bybit, OKX and Hyperliquid ($0.02). It tracks every USDT perp listed on at least two of them from $5M combined open interest and, by default, shows the ones with $10M and up; min_oi_usd changes that. Per symbol: the current funding per venue at its 8h equivalent, each venue\'s 30-day z-score against its own settled history, the cross-venue spread, and a flag on any |z| of 2 or more, most extreme first. Precomputed every 5 minutes, with as_of and stale.',
+    triggers: ['which perps have unusual funding right now, venue by venue', 'funding radar', 'where is funding abnormal against its own history', 'funding z-scores across exchanges'],
   },
   {
     path: '/api/open-interest',
@@ -484,29 +493,29 @@ export const ENDPOINTS: EndpointDef[] = [
   // 2026-09-19; they are now first-class paid routes.
   {
     path: '/api/eth-price',
-    usd: 0.001,
+    usd: 0.005,
     action: 'AGENTFEED_GET_ETH_PRICE',
     similes: ['ETH_PRICE', 'GET_ETH_PRICE', 'PRICE_OF_ETH'],
     description:
-      'ETH spot price in USD ($0.001), aggregated across seven independent venues (CoinGecko, Coinbase, Kraken, Binance, OKX, Gemini, DefiLlama). Returns the lead figure plus every venue quote that answered, so the spread is visible rather than hidden behind one exchange.',
+      'ETH spot price in USD ($0.005), aggregated across seven independent venues (CoinGecko, Coinbase, Kraken, Binance, OKX, Gemini, DefiLlama). Returns the lead figure plus every venue quote that answered, so the spread is visible rather than hidden behind one exchange.',
     triggers: ['what is ETH trading at', 'price of ethereum right now'],
   },
   {
     path: '/api/base-gas',
-    usd: 0.001,
+    usd: 0.005,
     action: 'AGENTFEED_GET_BASE_GAS',
     similes: ['BASE_GAS', 'GAS_PRICE_ON_BASE', 'L2_GAS'],
     description:
-      'Current gas price on Base, chain 8453, in BOTH gwei and wei ($0.001), with base fee, priority fee and block number when the node supplies them. Served from keyless public RPC with three-node fallback.',
+      'Current gas price on Base, chain 8453, in BOTH gwei and wei ($0.005), with base fee, priority fee and block number when the node supplies them. Served from keyless public RPC with three-node fallback.',
     triggers: ['what is gas on Base right now', 'Base gas price in gwei'],
   },
   {
     path: '/api/base-balance?address=:address',
-    usd: 0.002,
+    usd: 0.005,
     action: 'AGENTFEED_GET_BASE_BALANCE',
     similes: ['BASE_BALANCE', 'ETH_BALANCE', 'ERC20_BALANCE', 'WALLET_BALANCE_ON_BASE'],
     description:
-      'Native ETH or any ERC20 balance for an address on Base or Ethereum mainnet ($0.002). decimals() and symbol() are read from the contract at request time rather than assumed. Accepts a 0x address or an ENS name; ENS is resolved through two independent resolvers and used only when they agree.',
+      'Native ETH or any ERC20 balance for an address on Base or Ethereum mainnet ($0.005). decimals() and symbol() are read from the contract at request time rather than assumed. Accepts a 0x address or an ENS name; ENS is resolved through two independent resolvers and used only when they agree.',
     triggers: ['what is the ETH balance of 0x<address> on Base', 'USDC balance of 0x<address>'],
     param: 'address',
   },
@@ -523,38 +532,38 @@ export const ENDPOINTS: EndpointDef[] = [
   // openapi.json, SKILL.md and MCP titles -- not written by hand. ----
   {
     path: '/api/perp',
-    usd: 0.001,
+    usd: 0.005,
     action: 'AGENTFEED_GET_PERP',
     similes: ['PERP', 'GET_PERP'],
     description:
-      'Use when an agent needs one perp market in a single call ($0.001). Returns cross-venue funding (Bybit, OKX, Hyperliquid), open interest with 1h/24h change, long/short ratio, and 24h liquidations with long/short split and biggest print from our own tape.',
+      'Use when an agent needs one perp market in a single call ($0.005). Returns cross-venue funding (Bybit, OKX, Hyperliquid), open interest with 1h/24h change, long/short ratio, and 24h liquidations with long/short split and biggest print from our own tape.',
     triggers: ['what is this perp doing right now, in one call', 'perp snapshot'],
   },
   {
     path: '/api/liq-pulse',
-    usd: 0.001,
+    usd: 0.005,
     action: 'AGENTFEED_GET_LIQ_PULSE',
     similes: ['LIQ_PULSE', 'GET_LIQ_PULSE'],
     description:
-      'Use when an agent needs to know what is being liquidated right now ($0.001). Returns the last 60 minutes across every USDT perp we record: total USD, long/short split, prints and the top 5 symbols. Declines with the tape age if our recording is stale.',
+      'Use when an agent needs to know what is being liquidated right now ($0.005). Returns the last 60 minutes across every USDT perp we record: total USD, long/short split, prints and the top 5 symbols. Declines with the tape age if our recording is stale.',
     triggers: ['what is being liquidated right now', 'liquidation pulse'],
   },
   {
     path: '/api/funding-pulse',
-    usd: 0.001,
+    usd: 0.005,
     action: 'AGENTFEED_GET_FUNDING_PULSE',
     similes: ['FUNDING_PULSE', 'GET_FUNDING_PULSE'],
     description:
-      'Use when an agent needs the most extreme funding rates right now ($0.001). Returns the 5 largest absolute annualised rates across the whole Bybit USDT perp universe, each with venue, 8h rate, open interest and 24h price move. One call, not a full screen.',
+      'Use when an agent needs the most extreme funding rates right now ($0.005). Returns the 5 largest absolute annualised rates across the whole Bybit USDT perp universe, each with venue, 8h rate, open interest and 24h price move. One call, not a full screen.',
     triggers: ['where is funding most extreme right now', 'funding pulse'],
   },
   {
     path: '/api/price',
-    usd: 0.001,
+    usd: 0.005,
     action: 'AGENTFEED_GET_SPOT',
     similes: ['SPOT', 'GET_SPOT'],
     description:
-      'Use when an agent needs a spot price without choosing a venue ($0.001). Returns the price, the venue that actually served it, and a Pyth confidence when Pyth served. Coinbase, then Kraken, then Pyth Hermes. Serves SOL, BTC and ETH; anything else is declined.',
+      'Use when an agent needs a spot price without choosing a venue ($0.005). Returns the price, the venue that actually served it, and a Pyth confidence when Pyth served. Coinbase, then Kraken, then Pyth Hermes. Serves SOL, BTC and ETH; anything else is declined.',
     triggers: ['what is the spot price, without picking a venue', 'spot price'],
   },
 ];
