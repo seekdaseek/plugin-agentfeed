@@ -11,7 +11,7 @@ import type {
   State,
 } from '@elizaos/core';
 import { AgentFeedService } from './service.js';
-import { ENDPOINTS, BASE58_RE, SYMBOL_RE, EVM_RE, PERP_RE, type EndpointDef } from './endpoints.js';
+import { ENDPOINTS, BASE58_RE, SYMBOL_RE, EVM_RE, PERP_RE, matchTicker, matchCoin, type EndpointDef } from './endpoints.js';
 
 function buildExamples(def: EndpointDef): ActionExample[][] {
   return def.triggers.slice(0, 2).map((t) => [
@@ -38,6 +38,7 @@ function makeAction(def: EndpointDef): Action {
     validate: async (_runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
       const text = message?.content?.text ?? '';
       if (def.param === 'symbol') return SYMBOL_RE.test(text);
+      if (def.param === 'ticker') return matchTicker(text) !== null;
       if (def.param === 'address') return EVM_RE.test(text);
       if (def.param) return BASE58_RE.test(text);
       return true;
@@ -59,7 +60,14 @@ function makeAction(def: EndpointDef): Action {
       }
 
       let path = def.path;
-      if (def.param) {
+      if (def.param === 'ticker') {
+        const t = matchTicker(message?.content?.text ?? '');
+        if (!t) {
+          await callback?.({ text: 'I need a US stock or index ticker like TSLA or NVDA in the message to run this lookup.' });
+          return false;
+        }
+        path = path.replace(':ticker', t);
+      } else if (def.param) {
         const re =
           def.param === 'symbol' ? SYMBOL_RE : def.param === 'address' ? EVM_RE : BASE58_RE;
         const m = (message?.content?.text ?? '').match(re);
@@ -75,6 +83,10 @@ function makeAction(def: EndpointDef): Action {
           return false;
         }
         path = path.replace(`:${def.param}`, m[0]);
+      }
+      if (def.optional === 'coin' && def.coinParam && def.coins) {
+        const c = matchCoin(message?.content?.text ?? '', def.coins);
+        if (c) path += `${path.includes('?') ? '&' : '?'}${def.coinParam}=${c}`;
       }
       if (def.optional === 'perp') {
         const m = (message?.content?.text ?? '').match(PERP_RE);

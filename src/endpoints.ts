@@ -17,9 +17,16 @@ export interface EndpointDef {
   /** Natural-language examples that should trigger this action. */
   triggers: string[];
   /** Which param the path needs, if any. */
-  param?: 'mint' | 'wallet' | 'symbol' | 'address';
-  /** An optional query param, sent only when the message names one: 'perp' adds ?symbol= for a USDT perp. */
-  optional?: 'perp';
+  param?: 'mint' | 'wallet' | 'symbol' | 'address' | 'ticker';
+  /**
+   * An optional query param, sent only when the message names one: 'perp' adds ?symbol= for a
+   * USDT perp; 'coin' adds ?<coinParam>= for one of `coins`, named as a bare ticker (BTC, ETH).
+   */
+  optional?: 'perp' | 'coin';
+  /** Query param name for optional 'coin'. */
+  coinParam?: 'currency' | 'symbol';
+  /** Coins the route serves, for optional 'coin'. Anything else leaves the server default. */
+  coins?: string[];
 }
 
 export const ENDPOINTS: EndpointDef[] = [
@@ -266,6 +273,70 @@ export const ENDPOINTS: EndpointDef[] = [
     description:
       'Funding rates radar across Bybit, OKX and Hyperliquid ($0.02). It tracks every USDT perp listed on at least two of them from $5M combined open interest and, by default, shows the ones with $10M and up; min_oi_usd changes that. Per symbol: the current funding per venue at its 8h equivalent, each venue\'s 30-day z-score against its own settled history, the cross-venue spread, and a flag on any |z| of 2 or more, most extreme first. Precomputed every 5 minutes, with as_of and stale.',
     triggers: ['which perps have unusual funding right now, venue by venue', 'funding radar', 'where is funding abnormal against its own history', 'funding z-scores across exchanges'],
+  },
+  {
+    path: '/api/options-summary',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_OPTIONS_SUMMARY',
+    optional: 'coin',
+    coinParam: 'currency',
+    coins: ['BTC', 'ETH', 'SOL', 'XRP', 'HYPE'],
+    similes: ['OPTIONS_SUMMARY', 'GET_OPTIONS_SUMMARY'],
+    description:
+      'Implied volatility and options skew for BTC, ETH, SOL, XRP and HYPE from Deribit: DVOL (or our 30-day ATM implied vol where Deribit publishes none) with its 24h change, the ATM IV term structure, 25-delta risk reversal and butterfly per expiry, put/call ratio by open interest and 24h volume, options open interest in USD, max pain for the next three expiries and the top strikes ($0.02). Precomputed every 5 minutes; a snapshot older than 15 minutes answers 503 and is never charged.',
+    triggers: ['what is implied volatility, skew and max pain for this coin\'s options', 'options summary'],
+  },
+  {
+    path: '/api/options-gex',
+    usd: 0.03,
+    action: 'AGENTFEED_GET_OPTIONS_GEX',
+    optional: 'coin',
+    coinParam: 'currency',
+    coins: ['BTC', 'ETH', 'SOL', 'XRP', 'HYPE'],
+    similes: ['OPTIONS_GEX', 'GET_OPTIONS_GEX'],
+    description:
+      'Gamma exposure (GEX) for BTC, ETH, SOL, XRP and HYPE options on Deribit: gamma by strike in USD per 1% move, net GEX under a dealer-sign convention stated in every response, the gamma flip level and the call and put walls ($0.03). Black-Scholes gamma on Deribit mark implied volatility across every live expiry. Precomputed every 5 minutes; a snapshot older than 15 minutes answers 503 and is never charged.',
+    triggers: ['where is options gamma exposure and the gamma flip for this coin', 'options gamma exposure'],
+  },
+  {
+    path: '/api/market-state',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_MARKET_STATE',
+    optional: 'coin',
+    coinParam: 'symbol',
+    coins: ['BTC', 'ETH', 'SOL', 'HYPE'],
+    similes: ['MARKET_STATE', 'GET_MARKET_STATE'],
+    description:
+      'Market state for BTC, ETH, SOL or HYPE in one call: spot and perp basis, realized vol 7d and 30d, implied vol (DVOL or 30-day ATM) and the IV minus RV spread, funding per venue with 30-day z-scores, open interest and its 24h change, long/short, liquidations 1h and 24h by side, Fear and Greed, the next FOMC or CPI release, and flags with stated thresholds ($0.02). Every part carries its source and as-of time; a part we do not hold is null with a reason.',
+    triggers: ['what is the full pre-trade picture for this coin right now', 'market state'],
+  },
+  {
+    path: '/api/macro-calendar',
+    usd: 0.005,
+    action: 'AGENTFEED_GET_MACRO_CALENDAR',
+    similes: ['MACRO_CALENDAR', 'GET_MACRO_CALENDAR'],
+    description:
+      'FOMC, CPI, NFP and PCE calendar for traders: the next Fed rate decisions and the CPI, nonfarm payrolls and PCE release dates with UTC times converted from New York time (DST-aware), each with its official Fed, BLS or BEA source URL and the time we verified it ($0.005). Read daily from the agencies\' own pages and never entered by hand; data verified more than 35 days ago answers 503 and is never charged.',
+    triggers: ['when are the next fomc decision and cpi, nfp and pce releases', 'macro calendar'],
+  },
+  {
+    path: '/api/tradfi-radar',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_TRADFI_RADAR',
+    similes: ['TRADFI_RADAR', 'GET_TRADFI_RADAR'],
+    description:
+      'Stock perps, S&P 500, Nasdaq, gold and oil perps ranked by funding rate: every stock, index, commodity and FX perp on Hyperliquid HIP-3 dexes (trade[XYZ], Paragon, Markets by Kinetiq, Entropy), Bybit, Binance and OKX, with funding at its 8h equivalent, a 30-day funding z-score on HIP-3, open interest and its 24h change, mark minus oracle basis and 24h volume ($0.02). Filter by asset class or venue. Precomputed every 5 minutes; stale data answers 503.',
+    triggers: ['which stock, index, gold or oil perps have extreme funding right now', 'tradfi perps radar'],
+  },
+  {
+    path: '/api/equity-24h?symbol=:ticker',
+    usd: 0.01,
+    action: 'AGENTFEED_GET_EQUITY_24H',
+    similes: ['EQUITY_24H', 'GET_EQUITY_24H', 'WEEKEND_STOCK_PRICE'],
+    description:
+      'Weekend price for US stocks: an indicative 24/7 price for a stock or index (TSLA, NVDA, S&P 500, Nasdaq) from stock perps on Hyperliquid, Bybit, Binance and OKX and our tokenized stocks DEX price, with the last regular-session price, its time and source, the implied gap in %, each source\'s liquidity and the session (open, pre, after, overnight, weekend) ($0.01). Indicative, never an exchange quote; 503 when no source has liquidity.',
+    triggers: ['what is TSLA trading at right now, even on the weekend', 'weekend price for NVDA', 'equity 24/7 price for TSLA'],
+    param: 'ticker',
   },
   {
     path: '/api/open-interest',
@@ -567,6 +638,29 @@ export const ENDPOINTS: EndpointDef[] = [
     triggers: ['what is the spot price, without picking a venue', 'spot price'],
   },
 ];
+
+/**
+ * US stock or index ticker for equity-24h: $TSLA first, else the first bare 1-6 letter
+ * uppercase word that is not a common acronym. A tokenized name (TSLAx) maps to TSLA.
+ */
+export const TICKER_STOP = new Set(['I', 'A', 'US', 'USA', 'USD', 'USDT', 'USDC', 'ETF', 'CEO', 'AI', 'API', 'OK', 'IPO', 'NYSE', 'UTC', 'ET', 'EST', 'EDT', 'PM', 'AM', 'TV', 'FAQ', 'GDP', 'CPI', 'FOMC', 'NFP', 'PCE', 'WHAT', 'IS', 'THE', 'NOW']);
+export function matchTicker(text: string): string | null {
+  const d = text.match(/\$([A-Za-z]{1,6})\b/);
+  if (d) return d[1].replace(/x$/, '').toUpperCase();
+  for (const m of text.matchAll(/\b([A-Z]{1,6})(x?)\b/g)) {
+    if (!TICKER_STOP.has(m[1])) return m[1];
+  }
+  return null;
+}
+
+/** Bare coin ticker for optional 'coin' params, matched against the route's list. */
+export function matchCoin(text: string, coins: string[]): string | null {
+  for (const m of text.matchAll(/\b([A-Za-z]{2,5})\b/g)) {
+    const c = m[1].toUpperCase();
+    if (coins.includes(c)) return c;
+  }
+  return null;
+}
 
 /** Tokenized-equity ticker matcher, e.g. CRCLx, MSTRx, TSLAx. */
 export const SYMBOL_RE = /\b[A-Z]{1,6}x\b/;
