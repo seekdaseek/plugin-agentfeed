@@ -3,6 +3,8 @@
 // The authoritative price is always the live 402 quote — if the server raises a price
 // above AGENTFEED_MAX_SPEND_PER_CALL, the call is refused client-side.
 
+import { EQUITY_TICKERS, AMBIGUOUS_TICKERS } from './tickers.js';
+
 export interface EndpointDef {
   /** Path template. `:mint` / `:wallet` are filled from the message. */
   path: string;
@@ -640,15 +642,26 @@ export const ENDPOINTS: EndpointDef[] = [
 ];
 
 /**
- * US stock or index ticker for equity-24h: $TSLA first, else the first bare 1-6 letter
- * uppercase word that is not a common acronym. A tokenized name (TSLAx) maps to TSLA.
+ * US stock or index ticker for equity-24h, only from EQUITY_TICKERS (what the service
+ * quotes), so a crypto symbol (ETH, BTC, SOL, HYPE) never matches. In order: $TSLA,
+ * then a tokenized name (TSLAx -> TSLA), then a bare uppercase ticker. An AMBIGUOUS
+ * ticker (a word, a letter or a crypto perp base: META, COIN, V, STX) counts bare only
+ * when the message also says stock, shares, equity, ticker, Nasdaq or NYSE.
  */
-export const TICKER_STOP = new Set(['I', 'A', 'US', 'USA', 'USD', 'USDT', 'USDC', 'ETF', 'CEO', 'AI', 'API', 'OK', 'IPO', 'NYSE', 'UTC', 'ET', 'EST', 'EDT', 'PM', 'AM', 'TV', 'FAQ', 'GDP', 'CPI', 'FOMC', 'NFP', 'PCE', 'WHAT', 'IS', 'THE', 'NOW']);
+const STOCK_CONTEXT = /\b(stocks?|shares?|equit(y|ies)|tickers?|nasdaq|nyse)\b/i;
 export function matchTicker(text: string): string | null {
-  const d = text.match(/\$([A-Za-z]{1,6})\b/);
-  if (d) return d[1].replace(/x$/, '').toUpperCase();
-  for (const m of text.matchAll(/\b([A-Z]{1,6})(x?)\b/g)) {
-    if (!TICKER_STOP.has(m[1])) return m[1];
+  for (const m of text.matchAll(/\$([A-Za-z][A-Za-z0-9]{0,13})\b/g)) {
+    const raw = m[1].toUpperCase();
+    if (EQUITY_TICKERS.has(raw)) return raw;
+    if (/X$/.test(raw) && EQUITY_TICKERS.has(raw.slice(0, -1))) return raw.slice(0, -1);
+  }
+  for (const m of text.matchAll(/\b([A-Z][A-Z0-9]{0,13})x\b/g)) {
+    if (EQUITY_TICKERS.has(m[1])) return m[1];
+  }
+  const context = STOCK_CONTEXT.test(text);
+  for (const m of text.matchAll(/\b([A-Z][A-Z0-9]{0,13})\b/g)) {
+    const t = m[1];
+    if (EQUITY_TICKERS.has(t) && (context || !AMBIGUOUS_TICKERS.has(t))) return t;
   }
   return null;
 }
