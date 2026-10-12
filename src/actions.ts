@@ -11,7 +11,7 @@ import type {
   State,
 } from '@elizaos/core';
 import { AgentFeedService } from './service.js';
-import { ENDPOINTS, BASE58_RE, SYMBOL_RE, EVM_RE, PERP_RE, matchTicker, matchCoin, type EndpointDef } from './endpoints.js';
+import { ENDPOINTS, BASE58_RE, SYMBOL_RE, EVM_RE, PERP_RE, matchTicker, matchCoin, matchChain, type EndpointDef } from './endpoints.js';
 
 function buildExamples(def: EndpointDef): ActionExample[][] {
   return def.triggers.slice(0, 2).map((t) => [
@@ -87,6 +87,10 @@ function makeAction(def: EndpointDef): Action {
       if (def.optional === 'coin' && def.coinParam && def.coins) {
         const c = matchCoin(message?.content?.text ?? '', def.coins);
         if (c) path += `${path.includes('?') ? '&' : '?'}${def.coinParam}=${c}`;
+      }
+      if (def.optional === 'chain') {
+        const c = matchChain(message?.content?.text ?? '');
+        if (c) path += `${path.includes('?') ? '&' : '?'}chain=${c}`;
       }
       if (def.optional === 'perp') {
         const m = (message?.content?.text ?? '').match(PERP_RE);

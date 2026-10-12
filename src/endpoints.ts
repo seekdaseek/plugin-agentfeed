@@ -24,9 +24,9 @@ export interface EndpointDef {
    * An optional query param, sent only when the message names one: 'perp' adds ?symbol= for a
    * USDT perp; 'coin' adds ?<coinParam>= for one of `coins`, named as a bare ticker (BTC, ETH).
    */
-  optional?: 'perp' | 'coin';
+  optional?: 'perp' | 'coin' | 'chain';
   /** Query param name for optional 'coin'. */
-  coinParam?: 'currency' | 'symbol';
+  coinParam?: 'currency' | 'symbol' | 'coin';
   /** Coins the route serves, for optional 'coin'. Anything else leaves the server default. */
   coins?: string[];
 }
@@ -153,20 +153,20 @@ export const ENDPOINTS: EndpointDef[] = [
   },
   {
     path: '/api/sol-price',
-    usd: 0.005,
+    usd: 0.001,
     action: 'AGENTFEED_GET_SOL_PRICE',
     similes: ['GET_SOL_PRICE', 'SOL_PRICE'],
     description:
-      'Fetch live SOL spot price ($0.005). Use for a plain SOL price check.',
+      'SOL price / Solana spot price in USD, live ($0.001). Multi-source with a fixed fallback order — Coinbase, then Kraken — first finite quote wins. Returns the price and the venue that served it.',
     triggers: ["what's SOL trading at", 'SOL price'],
   },
   {
     path: '/api/btc-price',
-    usd: 0.005,
+    usd: 0.001,
     action: 'AGENTFEED_GET_BTC_PRICE',
     similes: ['GET_BTC_PRICE', 'BTC_PRICE'],
     description:
-      'Fetch live BTC spot price ($0.005). Use for a plain BTC price check.',
+      'BTC price / Bitcoin spot price in USD, live ($0.001). Multi-source with a fixed fallback order — Coinbase, then Kraken — first finite quote wins. Returns the price and the venue that served it.',
     triggers: ["what's bitcoin at", 'BTC price'],
   },
   {
@@ -487,33 +487,6 @@ export const ENDPOINTS: EndpointDef[] = [
     triggers: ['solana network health', 'current TPS on solana'],
   },
   {
-    path: '/api/tvl',
-    usd: 0.005,
-    action: 'AGENTFEED_GET_TVL',
-    similes: ['TVL', 'GET_TVL'],
-    description:
-      'TVL for any DeFi protocol (with 1d/7d change) or top-15 chains ranking. DefiLlama-backed.',
-    triggers: ['TVL of jito', 'top chains by TVL'],
-  },
-  {
-    path: '/api/stablecoin-flows',
-    usd: 0.01,
-    action: 'AGENTFEED_GET_STABLECOIN_FLOWS',
-    similes: ['STABLECOIN_FLOWS', 'GET_STABLECOIN_FLOWS'],
-    description:
-      'Total stablecoin supply with 7d/30d deltas and top stables — the macro risk-on/risk-off dial for crypto.',
-    triggers: ['stablecoin supply trend', 'is stablecoin supply growing'],
-  },
-  {
-    path: '/api/dex-quote',
-    usd: 0.005,
-    action: 'AGENTFEED_GET_DEX_QUOTE',
-    similes: ['DEX_QUOTE', 'GET_DEX_QUOTE'],
-    description:
-      'Live Jupiter swap quote for any SPL pair: output amount, price impact, route. The real executable price on Solana, not an index price.',
-    triggers: ['jupiter quote for <mint>', 'swap price on solana'],
-  },
-  {
     path: '/api/peg-universe',
     usd: 0.05,
     action: 'AGENTFEED_GET_PEG_UNIVERSE',
@@ -566,11 +539,11 @@ export const ENDPOINTS: EndpointDef[] = [
   // 2026-09-19; they are now first-class paid routes.
   {
     path: '/api/eth-price',
-    usd: 0.005,
+    usd: 0.001,
     action: 'AGENTFEED_GET_ETH_PRICE',
     similes: ['ETH_PRICE', 'GET_ETH_PRICE', 'PRICE_OF_ETH'],
     description:
-      'ETH spot price in USD ($0.005), aggregated across seven independent venues (CoinGecko, Coinbase, Kraken, Binance, OKX, Gemini, DefiLlama). Returns the lead figure plus every venue quote that answered, so the spread is visible rather than hidden behind one exchange.',
+      'ETH spot price in USD, aggregated across five exchanges (Coinbase, Kraken, Binance, OKX, Gemini) ($0.001). Returns the lead figure plus every venue quote that answered, so a caller can see the spread rather than trust one exchange. Venues are ranked in a fixed declared order, not completion order, so identical market state always returns the same lead price.',
     triggers: ['what is ETH trading at', 'price of ethereum right now'],
   },
   {
@@ -632,12 +605,44 @@ export const ENDPOINTS: EndpointDef[] = [
   },
   {
     path: '/api/price',
-    usd: 0.005,
+    usd: 0.001,
     action: 'AGENTFEED_GET_SPOT',
     similes: ['SPOT', 'GET_SPOT'],
     description:
-      'Use when an agent needs a spot price without choosing a venue ($0.005). Returns the price, the venue that actually served it, and a Pyth confidence when Pyth served. Coinbase, then Kraken, then Pyth Hermes. Serves SOL, BTC and ETH; anything else is declined.',
+      'Use when an agent needs a spot price without choosing a venue ($0.001). Returns the price and the venue that actually served it, Coinbase first, then Kraken. Serves SOL, BTC and ETH; anything else is declined.',
     triggers: ['what is the spot price, without picking a venue', 'spot price'],
+  },
+  {
+    path: '/api/hl-whales',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_HL_WHALES',
+    optional: 'coin',
+    coinParam: 'coin',
+    coins: ['BTC', 'ETH', 'SOL', 'HYPE', 'XRP', 'DOGE', 'SUI', 'BNB'],
+    similes: ['HL_WHALES', 'GET_HL_WHALES'],
+    description:
+      'Use when an agent needs to know how the biggest Hyperliquid traders are positioned ($0.02). Returns the open perp positions of the largest Hyperliquid accounts aggregated per coin: net long or short USD, account counts, size-weighted entries, notional-weighted distance to liquidation, notional within 10% of liquidation and uPnL. With coin=BTC: whale liquidation levels in 5% price bands and the largest positions. Refreshed every 5 minutes; stale data answers 503.',
+    triggers: ['how are the biggest hyperliquid traders positioned, and where are their liquidations', 'hyperliquid whales'],
+  },
+  {
+    path: '/api/base-launches',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_BASE_LAUNCHES',
+    similes: ['BASE_LAUNCHES', 'GET_BASE_LAUNCHES'],
+    description:
+      'Use when an agent needs the newest token launches on Base ($0.02). Returns pools created on Base in the last 24 hours on Uniswap V4, V3, V2 and Aerodrome, newest first, with launchpad, liquidity and volume. Each carries its pair, creation time, launchpad named from the V4 hook (Zora, Clanker, Doppler, Flaunch), quote-side liquidity, 24h volume and swaps, and our honeypot simulation for the busiest. Read from Base logs every minute; a snapshot older than 5 minutes answers 503.',
+    triggers: ['which tokens just launched on base, with liquidity and honeypot flags', 'base launches'],
+  },
+  {
+    path: '/api/honeypot-check?token=:address',
+    usd: 0.01,
+    action: 'AGENTFEED_GET_HONEYPOT_CHECK',
+    optional: 'chain',
+    similes: ['HONEYPOT_CHECK', 'GET_HONEYPOT_CHECK', 'IS_IT_A_HONEYPOT', 'CAN_I_SELL_THIS_TOKEN'],
+    description:
+      'Use when an agent needs to know whether a token on Base, BNB Chain or Ethereum can be sold before it buys ($0.01). Returns a verdict from our own buy-then-sell simulation on the token\'s deepest pool, with the buy and sell tax measured. Also: whether a wallet transfer works, bytecode flags (mintable, blacklist, proxy, pausable, owner), where simulation and bytecode disagree, and the block. Uniswap, Aerodrome and PancakeSwap pools. No pool found is a finding; RPC failure answers 503.',
+    triggers: ['is 0x<token> a honeypot', 'can this token on BNB Chain be sold', 'buy and sell tax of 0x<token> on Ethereum'],
+    param: 'address',
   },
 ];
 
@@ -672,6 +677,16 @@ export function matchCoin(text: string, coins: string[]): string | null {
     const c = m[1].toUpperCase();
     if (coins.includes(c)) return c;
   }
+  return null;
+}
+
+/**
+ * Chain for honeypot-check, only when the message names one: BNB Chain / BSC / PancakeSwap
+ * -> bsc, Ethereum mainnet -> ethereum. Anything else leaves the server default (base).
+ */
+export function matchChain(text: string): 'bsc' | 'ethereum' | null {
+  if (/\b(bsc|bnb chain|bnb smart chain|binance smart chain|pancakeswap)\b/i.test(text)) return 'bsc';
+  if (/\b(ethereum mainnet|on ethereum|ethereum token|eth mainnet)\b/i.test(text)) return 'ethereum';
   return null;
 }
 
