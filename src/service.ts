@@ -34,7 +34,7 @@ interface PaidResult {
 export class AgentFeedService extends Service {
   static serviceType = 'agentfeed';
   capabilityDescription =
-    'Pays for and fetches live crypto market data (liquidations, positioning, funding, prices, token risk) from the AgentFeed x402 API on Solana.';
+    'Pays per call, in USDC over x402 on Solana, for AgentFeed: crypto market data, Solana pre-trade checks, sanctions screening, scholarly papers, utilities and fixed-purpose language tasks.';
 
   private payFetch!: (url: string, init?: RequestInit) => Promise<Response>;
   private baseUrl: string = DEFAULT_BASE_URL;
@@ -135,6 +135,12 @@ export class AgentFeedService extends Service {
     if (cached && Date.now() - cached.checkedAt < QUOTE_TTL_MS) return cached.usd;
 
     const res = await fetch(this.baseUrl + path, { method: 'GET' });
+    if (res.status === 451) {
+      // The service does not offer this route where the caller is. It answers before any payment is asked for:
+      // nothing is paid, nothing is cached, and the caller reports it instead of retrying.
+      const body = await res.json().catch(() => null);
+      throw Object.assign(new Error('AgentFeed HTTP 451: this route is not offered from this location. Nothing was paid.'), { status: 451, body });
+    }
     if (res.status !== 402) {
       // free mode or no payment required — nothing to guard
       this.approvedQuotes.set(path, { usd: 0, checkedAt: Date.now() });
@@ -205,7 +211,7 @@ export class AgentFeedService extends Service {
       }
       return { ok: true, status: res.status, data, paidUsd, settlement };
     } catch (e: any) {
-      return { ok: false, status: 0, data: null, error: e?.message || String(e) };
+      return { ok: false, status: e?.status ?? 0, data: e?.body ?? null, error: e?.message || String(e) };
     }
   }
 

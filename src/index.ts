@@ -8,7 +8,7 @@ import { agentfeedActions } from './actions.js';
 export const agentfeedPlugin: Plugin = {
   name: 'agentfeed',
   description:
-    'Live crypto market data for trading agents — liquidations, long/short positioning, open interest, funding rates, SOL/BTC prices, and SPL token rug-risk checks. Each call is paid on the fly in USDC via the x402 protocol on Solana ($0.001–$0.10 per call). Requires a funded Solana wallet.',
+    'Crypto market data for AI agents (liquidations, funding, open interest, prices), Solana pre-trade checks, OFAC sanctions screening, scholarly papers, utilities and fixed-purpose language tasks (OCR, translate, summarize, extract, classify, prompt-injection check, transcribe). Each call is paid on the fly in USDC via the x402 protocol on Solana ($0.001–$0.10 per call). Requires a funded Solana wallet.',
   services: [AgentFeedService],
   actions: agentfeedActions,
 };
