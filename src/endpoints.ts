@@ -537,6 +537,15 @@ export const ENDPOINTS: EndpointDef[] = [
     triggers: ['what is being liquidated right now', 'liquidation pulse'],
   },
   {
+    path: '/api/liq-feed',
+    usd: 0.001,
+    action: 'AGENTFEED_GET_LIQ_FEED',
+    similes: ['LIQ_FEED', 'GET_LIQ_FEED'],
+    description:
+      'Use when an agent needs liquidation pressure as it happens ($0.001). Returns 5-second buckets per symbol of long and short USD liquidated across venues, the dominant side and pressure against the symbol\'s own baseline, from a gap-free cursor.',
+    triggers: ['which side is being liquidated across venues right now, and how hard compared with normal', 'liquidation pressure feed'],
+  },
+  {
     path: '/api/funding-pulse',
     usd: 0.005,
     action: 'AGENTFEED_GET_FUNDING_PULSE',

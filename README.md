@@ -4,7 +4,7 @@ Crypto market data for AI agents (liquidations, funding, open interest, prices),
 
 No API keys. No subscriptions. No signup. Your agent holds a wallet, and pays $0.001–$0.10 per call only when it actually needs data.
 
-Backed by [AgentFeed](https://x402.ochinimus.app): 82 paid data routes and 1 free one, 83 actions in all.
+Backed by [AgentFeed](https://x402.ochinimus.app): 83 paid data routes and 1 free one, 84 actions in all.
 
 - **Market data:** the liquidation tape (Bybit, OKX and Binance streams), a Hyperliquid funding radar over every perp, open interest, positioning, a signal board and a per-coin signal, spot prices read on-chain, tradfi perps, FX rates, a macro calendar, tokenized-stock peg data and collateral exit quotes.
 - **Solana pre-trade checks:** token check, token flow and holder clusters, plus token risk; and honeypot checks for tokens on Base, BNB Chain and Ethereum.
@@ -67,6 +67,7 @@ The service itself takes x402 `exact` on nine networks in every 402 (Solana, Bas
 | `AGENTFEED_GET_CASCADE_FORECAST` | Liquidation forecast, FORWARD-LOOKING and not a description of what already happened. | $0.02 |
 | `AGENTFEED_GET_PERP` | Use when an agent needs one perp market in a single call. | $0.005 |
 | `AGENTFEED_GET_LIQ_PULSE` | Use when an agent needs to know what is being liquidated right now. | $0.005 |
+| `AGENTFEED_GET_LIQ_FEED` | Use when an agent needs liquidation pressure as it happens. | $0.001 |
 | `AGENTFEED_GET_FUNDING_PULSE` | Use when an agent needs the most extreme funding rates right now. | $0.005 |
 | `AGENTFEED_GET_SPOT` | Use when an agent needs a spot price without choosing a venue. | $0.001 |
 | `AGENTFEED_GET_HL_WHALES` | Use when an agent needs to know how the biggest Hyperliquid traders are positioned. | $0.02 |
