@@ -18,9 +18,9 @@ The service itself takes x402 `exact` on nine networks in every 402 (Solana, Bas
 
 | Action | Data | Price |
 |---|---|---|
-| `AGENTFEED_GET_CASCADE_SCAN` | Liquidation cascade scan across EVERY USDT perp we record on Bybit, OKX and Binance at once, not just the majors: symbol, side liquidated, USD total, prints, duration, severity. | $0.05 |
+| `AGENTFEED_GET_CASCADE_SCAN` | Liquidation cascade scan across EVERY USDT perp we record at once, not just the majors: symbol, side liquidated, USD total, prints, duration, severity. | $0.05 |
 | `AGENTFEED_GET_LIQUIDATION_LEADERS` | Liquidation leaderboard: top symbols by liquidation USD right now across every USDT perp we record on Bybit, OKX and Binance, with long/short split, biggest single print and venue count. | $0.02 |
-| `AGENTFEED_GET_CASCADE_ALERT` | Liquidation cascade detector, live: clustered same-side liquidations happening NOW on SOL, BTC, ETH, XRP and DOGE across Bybit, OKX and Binance, with side, USD total, prints, duration and severity. | $0.01 |
+| `AGENTFEED_GET_CASCADE_ALERT` | Liquidation cascade detector, live: clustered same-side liquidations happening NOW on SOL, BTC, ETH, XRP and DOGE across venues, with side, USD total, prints, duration and severity. | $0.01 |
 | `AGENTFEED_GET_TRADE_CONTEXT` | Crypto trading context in one call: SOL and BTC prices read on-chain from DEX pools, perp funding rates, Fear & Greed, positioning (open interest and the top Hyperliquid accounts' net-long share) and 1h/24h liquidation stats. | $0.01 |
 | `AGENTFEED_GET_LIQUIDATIONS` | Crypto liquidations, live tape: recent perp liquidation prints across Bybit, OKX and Binance with timestamp, side liquidated, size, price and USD value. | $0.005 |
 | `AGENTFEED_GET_LIQUIDATION_STATS` | Liquidation stats, 1h and 24h totals for SOL, BTC, ETH, XRP and DOGE: long vs short USD split, biggest single print, and a per-exchange breakdown across Bybit, OKX and Binance. | $0.01 |
@@ -54,13 +54,13 @@ The service itself takes x402 `exact` on nine networks in every 402 (Solana, Bas
 | `AGENTFEED_GET_TOKEN_HOLDERS` | Top holders of any SPL token: per-account share with top-1, top-5 and top-10 concentration for a Solana mint. | $0.02 |
 | `AGENTFEED_GET_WALLET_ACTIVITY` | Solana wallet activity: recent transactions for any address, each with the wallet's SOL and token balance changes, the fee, failures and the programs invoked. | $0.02 |
 | `AGENTFEED_GET_PRIORITY_FEES` | Solana priority fees right now: percentiles from min to max of the per-slot minimum fee paid on the busiest SOL/USDC pools over the last ~150 slots, in micro-lamports per compute unit, with a recommended level. | $0.005 |
-| `AGENTFEED_GET_JITO_TIPS` | Jito tips sampled on-chain: p25 to p99 in SOL of the newest transfers into Jito's tip accounts, what landed bundles actually paid, refreshed every 5 minutes, with a landing recommendation. | $0.005 |
+| `AGENTFEED_GET_JITO_TIPS` | Jito tips sampled on-chain: p25 to p99 in SOL of the newest transfers into Jito's tip accounts, what landed bundles actually paid, refreshed every 15 minutes (the age is in the answer), with a landing recommendation. | $0.005 |
 | `AGENTFEED_GET_SOL_NETWORK` | Solana network health: recent average TPS, the current slot, the current epoch and epoch progress in %. | $0.005 |
 | `AGENTFEED_GET_PEG_UNIVERSE` | Tokenized stocks ranked by off-hours peg risk: every tokenized US equity we track, with p95 and max deviation bps, market-open deviation as the control, and median liquidity. | $0.05 |
 | `AGENTFEED_GET_PEG_DEVIATION` | Tokenized stock peg deviation on Solana: the on-chain DEX price of a tokenized US equity versus the underlying's last real trade, in bps, with 24h stats split into market-open and off-hours. | $0.02 |
 | `AGENTFEED_GET_PEG_SESSIONS` | Tokenized stock peg by trading session: deviation broken out across open, premarket, afterhours, overnight and weekend — mean, p95, max bps and median liquidity each, with the worst off-hours window flagged. | $0.03 |
 | `AGENTFEED_GET_EXIT_QUOTE` | EXIT LIQUIDITY on seized collateral: what a liquidator ACTUALLY realises selling a Kamino reserve into live routing, versus the oracle price the protocol marks it at. | $0.02 |
-| `AGENTFEED_GET_EXIT_METHOD` | FREE: exactly how the collateral exit measurements are produced, so the numbers can be checked rather than trusted. | free |
+| `AGENTFEED_GET_EXIT_METHOD` | FREE: how overhang measures exit liquidity on lending collateral, and the counts behind every paid answer - computed from the tape at request time, nothing hardcoded. | free |
 | `AGENTFEED_GET_ETH_PRICE` | ETH spot price in USD, read on-chain from the two deepest WETH/USDC Uniswap V3 pools, on Ethereum and on Base. | $0.001 |
 | `AGENTFEED_GET_BASE_GAS` | Base gas price (chain 8453) in BOTH gwei and wei, with base fee, priority fee and block number when the node supplies them. | $0.005 |
 | `AGENTFEED_GET_BASE_BALANCE` | ERC20 and native ETH wallet balance on Base or Ethereum mainnet, for a 0x address or an ENS name. | $0.005 |
@@ -100,7 +100,7 @@ The service itself takes x402 `exact` on nine networks in every 402 (Solana, Bas
 | `AGENTFEED_GET_EXTRACT` | Use when an agent needs named fields from a page or PDF. | $0.025 |
 | `AGENTFEED_GET_TRANSLATE` | Use when an agent needs text in another language. | $0.04 |
 | `AGENTFEED_GET_CLASSIFY` | Use when an agent needs text sorted into its own categories. | $0.005 |
-| `AGENTFEED_GET_INJECTION_CHECK` | Use when an agent needs to vet untrusted text before reading it. | $0.004 |
+| `AGENTFEED_GET_INJECTION_CHECK` | Use when an agent needs untrusted text screened for prompt-injection attempts. | $0.004 |
 | `AGENTFEED_GET_TRANSCRIBE` | Use when an agent needs the words in an audio file. | $0.02 |
 
 ## How the actions read your message
