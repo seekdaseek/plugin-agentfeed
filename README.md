@@ -12,7 +12,7 @@ Backed by [AgentFeed](https://x402.ochinimus.app): 83 paid data routes and 1 fre
 - **Utilities:** hash, QR, time and unit conversion.
 - **Fixed-purpose language tasks:** OCR, summarize, extract, translate, classify, prompt-injection check and transcribe.
 
-The service itself takes x402 `exact` on nine networks in every 402 (Solana, Base, Polygon, Arbitrum, Arc, Algorand, Optimism, Monad, Avalanche) and, on request, on eleven more (`GET /api/<route>|<network>`: Celo, HyperEVM, Unichain, Scroll, SKALE Base, BNB Chain, Ethereum, Robinhood Chain, World Chain, Sei, X Layer), plus half-price batch and Gateway options for high-frequency callers, MPP, and prepaid API keys for bots that cannot pay x402. This plugin pays per call with `exact` on Solana only: the other networks, the half-price options, MPP and prepaid keys are not used, and the prepaid key purchase routes are not actions.
+The service itself takes x402 `exact` on eight networks in every 402 (Solana, Base, Polygon, Arbitrum, Arc, Optimism, Monad, Avalanche) and, on request, on eleven more (`GET /api/<route>|<network>`: Celo, HyperEVM, Unichain, Scroll, SKALE Base, BNB Chain, Ethereum, Robinhood Chain, World Chain, Sei, X Layer), plus half-price batch and Gateway options for high-frequency callers, MPP, and prepaid API keys for bots that cannot pay x402. This plugin pays per call with `exact` on Solana only: the other networks, the half-price options, MPP and prepaid keys are not used, and the prepaid key purchase routes are not actions.
 
 ## What your agent can ask for
 
