@@ -888,6 +888,33 @@ export const ENDPOINTS: EndpointDef[] = [
     triggers: ['what is said in https://example.com/clip.mp3', 'transcribe this audio file: https://example.com/call.wav'],
     input: 'transcribe',
   },
+  {
+    path: '/api/morning-brief',
+    usd: 0.03,
+    action: 'AGENTFEED_GET_MORNING_BRIEF',
+    similes: ['MORNING_BRIEF', 'GET_MORNING_BRIEF'],
+    description:
+      'Use when an agent needs a one-answer summary of the last 8 hours in BTC, ETH, SOL and HYPE ($0.03). Returns the items ranked by how abnormal each is: price move against the coin\'s own usual 8-hour move, funding, open interest, liquidations (total, long/short split, biggest print), Fear and Greed, today\'s macro releases with UTC times, and the nearest liquidation cluster as the level to watch. A stale source is left out and named; with no sampler it answers 503, never billed.',
+    triggers: ['what changed overnight in btc, eth, sol and hype, and what is the one level to watch', 'morning brief'],
+  },
+  {
+    path: '/api/move-alert',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_MOVE_ALERT',
+    similes: ['MOVE_ALERT', 'GET_MOVE_ALERT'],
+    description:
+      'Use when an agent needs to know which Hyperliquid perps moved unusually ($0.02). Returns each coin whose 5-minute, 1-hour or 4-hour price move, or 1-hour open-interest change, is past its own measured tail (tiers from the coin\'s own history, sample size printed), labelled event-driven when a scheduled FOMC, CPI, NFP or PCE release explains it. An empty list is a valid answer. Stale inputs answer 503, never billed.',
+    triggers: ['which hyperliquid perps moved unusually, and was it the calendar or unexplained flow', 'move alert'],
+  },
+  {
+    path: '/api/anomaly-flag',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_ANOMALY_FLAG',
+    similes: ['ANOMALY_FLAG', 'GET_ANOMALY_FLAG'],
+    description:
+      'Use when an agent needs one check for what is abnormal across Hyperliquid perps right now ($0.02). Returns funding, liquidation and open-interest anomalies in one ranked list, using the thresholds of /api/market-state, or nothing abnormal with what was checked. If a source is stale and nothing else was found it answers 503 rather than an all-clear, and is never billed.',
+    triggers: ['is anything abnormal in funding, liquidations or open interest across the perps right now', 'anomaly flag'],
+  },
 ];
 
 /**

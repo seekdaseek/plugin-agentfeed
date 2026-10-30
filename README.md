@@ -4,7 +4,7 @@ Crypto market data for AI agents (liquidations, funding, open interest, prices),
 
 No API keys. No subscriptions. No signup. Your agent holds a wallet, and pays $0.001–$0.10 per call only when it actually needs data.
 
-Backed by [AgentFeed](https://x402.ochinimus.app): 83 paid data routes and 1 free one, 84 actions in all.
+Backed by [AgentFeed](https://x402.ochinimus.app): 86 paid data routes and 1 free one, 87 actions in all.
 
 - **Market data:** the liquidation tape (Bybit, OKX and Binance streams), a Hyperliquid funding radar over every perp, open interest, positioning, a signal board and a per-coin signal, spot prices read on-chain, tradfi perps, FX rates, a macro calendar, tokenized-stock peg data and collateral exit quotes.
 - **Solana pre-trade checks:** token check, token flow and holder clusters, plus token risk; and honeypot checks for tokens on Base, BNB Chain and Ethereum.
@@ -102,6 +102,9 @@ The service itself takes x402 `exact` on eight networks in every 402 (Solana, Ba
 | `AGENTFEED_GET_CLASSIFY` | Use when an agent needs text sorted into its own categories. | $0.005 |
 | `AGENTFEED_GET_INJECTION_CHECK` | Use when an agent needs untrusted text screened for prompt-injection attempts. | $0.004 |
 | `AGENTFEED_GET_TRANSCRIBE` | Use when an agent needs the words in an audio file. | $0.02 |
+| `AGENTFEED_GET_MORNING_BRIEF` | Use when an agent needs a one-answer summary of the last 8 hours in BTC, ETH, SOL and HYPE. | $0.03 |
+| `AGENTFEED_GET_MOVE_ALERT` | Use when an agent needs to know which Hyperliquid perps moved unusually. | $0.02 |
+| `AGENTFEED_GET_ANOMALY_FLAG` | Use when an agent needs one check for what is abnormal across Hyperliquid perps right now. | $0.02 |
 
 ## How the actions read your message
 
