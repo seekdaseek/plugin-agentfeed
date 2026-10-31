@@ -1,14 +1,15 @@
 # @seekdaseek/plugin-agentfeed
 
-Crypto market data for AI agents (liquidations, funding, open interest, prices), Solana pre-trade checks, OFAC sanctions screening, scholarly papers, utilities and fixed-purpose language tasks (OCR, translate, summarize, extract, classify, prompt-injection check, transcribe). An [elizaOS](https://github.com/elizaOS/eliza) plugin: every route is an action, paid per call in USDC over the [x402 protocol](https://x402.org) on Solana.
+Crypto market data for AI agents (liquidations, funding, open interest, prices), Solana pre-trade checks, OFAC sanctions screening, scholarly papers, x402 endpoint checks, claim checks against sources, site signals, utilities and fixed-purpose language tasks (OCR, translate, summarize, extract, classify, prompt-injection check, transcribe). An [elizaOS](https://github.com/elizaOS/eliza) plugin: every route is an action, paid per call in USDC over the [x402 protocol](https://x402.org) on Solana.
 
-No API keys. No subscriptions. No signup. Your agent holds a wallet, and pays $0.001–$0.10 per call only when it actually needs data.
+No API keys. No subscriptions. No signup. Your agent holds a wallet, and pays $0.001–$1 per call only when it actually needs data.
 
-Backed by [AgentFeed](https://x402.ochinimus.app): 86 paid data routes and 1 free one, 87 actions in all.
+Backed by [AgentFeed](https://x402.ochinimus.app): 91 paid data routes and 1 free one, 92 actions in all.
 
-- **Market data:** the liquidation tape (Bybit, OKX and Binance streams), a Hyperliquid funding radar over every perp, open interest, positioning, a signal board and a per-coin signal, spot prices read on-chain, tradfi perps, FX rates, a macro calendar, tokenized-stock peg data and collateral exit quotes.
+- **Market data:** the liquidation tape (Bybit, OKX and Binance streams), a cascade backtest, a Hyperliquid funding radar over every perp, open interest, positioning, a signal board and a per-coin signal, spot prices read on-chain, tradfi perps, FX rates, a macro calendar, tokenized-stock peg data and collateral exit quotes.
 - **Solana pre-trade checks:** token check, token flow and holder clusters, plus token risk; and honeypot checks for tokens on Base, BNB Chain and Ethereum.
-- **Research and compliance:** OFAC sanctions screening, scholarly papers, Wikipedia, email and domain checks, SEC filings and insider trades, and web pages and PDFs as markdown.
+- **Research and compliance:** OFAC sanctions screening, scholarly papers, Wikipedia, email and domain checks, SEC filings and insider trades, claim checks against sources, site signals, and web pages and PDFs as markdown.
+- **x402 endpoint checks:** a lint of an endpoint's payment challenge that never pays, and a test that pays it once.
 - **Utilities:** hash, QR, time and unit conversion.
 - **Fixed-purpose language tasks:** OCR, summarize, extract, translate, classify, prompt-injection check and transcribe.
 
@@ -105,6 +106,19 @@ The service itself takes x402 `exact` on eight networks in every 402 (Solana, Ba
 | `AGENTFEED_GET_MORNING_BRIEF` | Use when an agent needs a one-answer summary of the last 8 hours in BTC, ETH, SOL and HYPE. | $0.03 |
 | `AGENTFEED_GET_MOVE_ALERT` | Use when an agent needs to know which Hyperliquid perps moved unusually. | $0.02 |
 | `AGENTFEED_GET_ANOMALY_FLAG` | Use when an agent needs one check for what is abnormal across Hyperliquid perps right now. | $0.02 |
+| `AGENTFEED_GET_X402_LINT` | Use when an agent needs to check an x402 endpoint's payment challenge before paying it. | $0.05 |
+| `AGENTFEED_GET_X402_TEST` | Use when an agent needs proof that an x402 endpoint takes a real payment. | $1.00 |
+| `AGENTFEED_GET_CASCADE_BACKTEST` | Use when an agent needs what price did after past liquidation cascades. | $0.50 |
+| `AGENTFEED_GET_CLAIM_CHECK` | Use when an agent needs a short claim checked against sources. | $0.15 |
+| `AGENTFEED_GET_SITE_SIGNALS` | Use when an agent needs the technical facts of one website. | $0.02 |
+
+Five of the actions look outward, at an endpoint, a claim, a site or the liquidation record:
+
+- `AGENTFEED_GET_X402_LINT` reads the payment challenge of an x402 endpoint you name and returns a verdict, a 0 to 100 score and 32 checks, paywall bypass included; it never pays.
+- `AGENTFEED_GET_X402_TEST` has the service pay the endpoint you name once from its own wallet, up to $0.05 in Base or Solana USDC, and returns PASS, FAIL or INCONCLUSIVE with the receipt; the caller is quoted $1.
+- `AGENTFEED_GET_CASCADE_BACKTEST` returns past liquidation cascades with the price's 15 m, 1 h, 4 h and 24 h forward returns, n, mean, median, hit rate, a bootstrap interval and a random-time baseline; the plugin sends no parameters, so the service's default symbol and thresholds apply.
+- `AGENTFEED_GET_CLAIM_CHECK` checks one short claim against up to 3 https sources (a filing or Wikipedia articles when none are given) and returns SUPPORTED, CONTRADICTED or INSUFFICIENT with each supporting line quoted word for word.
+- `AGENTFEED_GET_SITE_SIGNALS` returns one website's TLS certificate, DNS records, a security-header grade over 8 checks, tech stack and social links.
 
 ## How the actions read your message
 
@@ -129,10 +143,13 @@ Most actions need nothing but the question. The ones that take an input read it 
 | email, domain, DOI | an email address, a hostname such as `example.com`, a DOI such as `10.1038/nature14539` |
 | Wikipedia, papers | a title ("about Solana (blockchain platform)"), a topic ("papers on graph neural networks since 2022, top 5") |
 | SEC filings, insider trades | a US ticker such as `$NVDA` |
+| x402 lint, x402 test, site signals | an http(s) URL; the service takes https only for the test and for site signals |
+| claim check | the claim in double quotes or after a colon (10 to 300 characters); every https URL in the message is a source, up to 3 |
+| cascade backtest | nothing; the service's defaults apply |
 
 Inputs travel in the URL of a GET, so a whole request over 8,000 characters once encoded is refused in words before anything is paid; the 4,000-character text limit of translate, classify and injection check is reachable only with plain Latin text.
 
-The seven fixed-purpose language tasks are not offered from every region. Where the service does not offer them it answers HTTP 451 before asking for payment; the action then says so in words, pays nothing and does not retry.
+The seven fixed-purpose language tasks and `AGENTFEED_GET_CLAIM_CHECK` are not offered from every region. Where the service does not offer them it answers HTTP 451 before asking for payment; the action then says so in words, pays nothing and does not retry.
 
 ## Quickstart
 
@@ -171,7 +188,7 @@ Then just talk to your agent:
 
 Agents with funded wallets and buggy loops are a drained-wallet incident waiting to happen. This plugin refuses to pay blind:
 
-- Before paying any endpoint, the plugin reads the live 402 quote and **refuses any price above `AGENTFEED_MAX_SPEND_PER_CALL`** (default `$0.50`, above the most expensive action, `get_squeeze_score` at $0.10).
+- Before paying any endpoint, the plugin reads the live 402 quote and **refuses any price above `AGENTFEED_MAX_SPEND_PER_CALL`** (default `$0.50`). The most expensive action, `get_x402_test`, quotes $1, so at the default it is refused with the quote and the cap named; set `AGENTFEED_MAX_SPEND_PER_CALL` to `1` or more to allow it. Every other action quotes $0.50 or less.
 - Approved quotes are cached for 10 minutes, so steady-state calls cost a single request.
 - No `Provider` is registered — the plugin never silently injects paid data into every prompt. Data is fetched only when an action explicitly fires.
 
@@ -181,7 +198,7 @@ Agents with funded wallets and buggy loops are a drained-wallet incident waiting
 |---|---|---|---|
 | `AGENTFEED_PRIVATE_KEY` | yes | — | Payer wallet key (base58 string or JSON byte array). Must hold USDC on Solana mainnet. |
 | `AGENTFEED_BASE_URL` | no | `https://x402.ochinimus.app` | API base URL. |
-| `AGENTFEED_MAX_SPEND_PER_CALL` | no | `0.5` | USD cap per call; higher quotes are refused. |
+| `AGENTFEED_MAX_SPEND_PER_CALL` | no | `0.5` | USD cap per call; higher quotes are refused (`get_x402_test` quotes $1). |
 
 ## Security notes
 

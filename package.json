@@ -1,7 +1,7 @@
 {
   "name": "@seekdaseek/plugin-agentfeed",
-  "version": "0.12.0",
-  "description": "Crypto market data for AI agents (liquidations, funding, open interest, prices), Solana pre-trade checks, OFAC sanctions screening, scholarly papers, utilities and fixed-purpose language tasks (OCR, translate, summarize, extract, classify, prompt-injection check, transcribe). An elizaOS plugin for AgentFeed: 86 paid data routes and 1 free one as actions, $0.001–$0.10 per call in USDC over x402 on Solana, no API keys.",
+  "version": "0.13.0",
+  "description": "Crypto market data for AI agents (liquidations, funding, open interest, prices), Solana pre-trade checks, OFAC sanctions screening, scholarly papers, x402 endpoint checks, claim checks against sources, site signals, utilities and fixed-purpose language tasks (OCR, translate, summarize, extract, classify, prompt-injection check, transcribe). An elizaOS plugin for AgentFeed: 91 paid data routes and 1 free one as actions, $0.001–$1 per call in USDC over x402 on Solana, no API keys.",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -65,7 +65,7 @@
       },
       "AGENTFEED_MAX_SPEND_PER_CALL": {
         "type": "string",
-        "description": "Safety cap in USD per single API call. Any 402 quote above this is refused. Default: 0.5, above the most expensive action (get_squeeze_score, $0.10), so every action works out of the box. Lower it to restrict spend."
+        "description": "Safety cap in USD per single API call. Any 402 quote above this is refused. Default: 0.5, which allows every action except the most expensive, get_x402_test ($1); set 1 or more to allow it. Lower it to restrict spend."
       }
     }
   }

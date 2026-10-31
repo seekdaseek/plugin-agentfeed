@@ -915,6 +915,55 @@ export const ENDPOINTS: EndpointDef[] = [
       'Use when an agent needs one check for what is abnormal across Hyperliquid perps right now ($0.02). Returns funding, liquidation and open-interest anomalies in one ranked list, using the thresholds of /api/market-state, or nothing abnormal with what was checked. If a source is stale and nothing else was found it answers 503 rather than an all-clear, and is never billed.',
     triggers: ['is anything abnormal in funding, liquidations or open interest across the perps right now', 'anomaly flag'],
   },
+  {
+    path: '/api/x402-lint?url=:url',
+    usd: 0.05,
+    action: 'AGENTFEED_GET_X402_LINT',
+    similes: ['X402_LINT', 'GET_X402_LINT'],
+    description:
+      'Use when an agent needs to check an x402 endpoint\'s payment challenge before paying it ($0.05). Returns a verdict, a 0 to 100 score and 32 checks, paywall bypass included. Never pays. An unreachable endpoint answers 503 and a refused URL 400, neither charged.',
+    triggers: ['lint the payment challenge of https://api.example.com/v1/price', 'is the paywall of https://api.example.com/v1/price closed to unpaid requests'],
+    param: 'url',
+  },
+  {
+    path: '/api/x402-test?url=:url',
+    usd: 1,
+    action: 'AGENTFEED_GET_X402_TEST',
+    similes: ['X402_TEST', 'GET_X402_TEST'],
+    description:
+      'Use when an agent needs proof that an x402 endpoint takes a real payment ($1). Returns PASS, FAIL or INCONCLUSIVE with the receipt after paying it once from our own wallet, up to $0.05, in Base or Solana USDC. A 503 or 404 is not charged.',
+    triggers: ['does https://api.example.com/v1/price accept a real x402 payment', 'pay https://api.example.com/v1/price once and report PASS or FAIL with the receipt'],
+    param: 'url',
+  },
+  {
+    path: '/api/cascade-backtest',
+    usd: 0.5,
+    action: 'AGENTFEED_GET_CASCADE_BACKTEST',
+    similes: ['CASCADE_BACKTEST', 'GET_CASCADE_BACKTEST'],
+    description:
+      'Use when an agent needs what price did after past liquidation cascades ($0.5). Returns a symbol\'s events with 15 m, 1 h, 4 h and 24 h forward returns, n, mean, median, hit rate, a bootstrap interval and a random-time baseline. Not charged on 400, 404 or 503.',
+    triggers: ['what did the price of a perp do after past liquidation cascades of this size, compared with random times', 'cascade backtest'],
+  },
+  {
+    path: '/api/claim-check?claim=:claim',
+    usd: 0.15,
+    action: 'AGENTFEED_GET_CLAIM_CHECK',
+    similes: ['CLAIM_CHECK', 'GET_CLAIM_CHECK'],
+    description:
+      'Use when an agent needs a short claim checked against sources ($0.15). Returns SUPPORTED, CONTRADICTED or INSUFFICIENT, with every supporting line quoted word for word from a filing, Wikipedia article or URL. No readable source answers 404 or 503, not charged.',
+    triggers: ['check the claim "Mount Everest is 8,849 metres tall" against Wikipedia', 'does https://example.com/report support the claim: the company doubled its revenue in 2024'],
+    input: 'claim',
+  },
+  {
+    path: '/api/site-signals?url=:url',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_SITE_SIGNALS',
+    similes: ['SITE_SIGNALS', 'GET_SITE_SIGNALS'],
+    description:
+      'Use when an agent needs the technical facts of one website ($0.02). Returns its TLS certificate, DNS records, a security-header grade over 8 checks, tech stack and social links. A bad URL (400) or unreachable site (503) is not charged.',
+    triggers: ['what do the TLS certificate, DNS records and security headers of https://www.example.com/ show', 'site signals for https://www.example.com/'],
+    param: 'url',
+  },
 ];
 
 /**
@@ -1098,7 +1147,7 @@ export type InputKind =
   | 'translate' | 'classify' | 'injection'
   | 'hash' | 'qr' | 'convert' | 'time'
   | 'email' | 'domain' | 'wiki' | 'papers' | 'doi'
-  | 'sanctions' | 'coin' | 'board';
+  | 'sanctions' | 'coin' | 'board' | 'claim';
 
 /** values fill the `:name` slots of the path template; extra are query parameters added after it. */
 export type Resolved = { values: Record<string, string>; extra: [string, string][] } | { refusal: string };
@@ -1612,6 +1661,26 @@ export function matchSwaps(text: string): number | null {
   return m ? Math.min(100, Math.max(20, Number(m[1]))) : null;
 }
 
+// ---- claim-check: one short claim, and up to 3 https source URLs ---------------------------
+/** The claim in double quotes, else after a colon or line break; every URL in the message is a source (https only, up to 3), the rest is the claim. */
+function rClaim(text: string): Resolved {
+  const q = quotedSpan(text);
+  const outside = q ? without(text, q) : text;
+  const urls: string[] = [];
+  for (let rest = outside, u = matchUrl(rest); u; u = matchUrl(rest)) {
+    if (!urls.includes(u)) urls.push(u);
+    rest = rest.replace(u, ' ');
+  }
+  let claim = q ? q.value : splitPayload(text).payload;
+  if (claim && !q) for (const u of urls) claim = claim.replace(u, ' ');
+  claim = claim ? claim.replace(/\s+/g, ' ').trim() : null;
+  if (!claim) return no('I need the claim in double quotes, or after a colon, in the message to run this check.');
+  if (nchars(claim) < 10 || nchars(claim) > 300) return no('The claim must be one statement of 10 to 300 characters.');
+  if (urls.some((u) => !/^https:\/\//i.test(u))) return no('Source URLs must start with https://.');
+  if (urls.length > 3) return no('I can pass up to 3 source URLs; the message has more.');
+  return ok({ claim }, urls.map((u): [string, string] => ['urls', u]));
+}
+
 export function resolveInput(kind: InputKind, text: string): Resolved {
   switch (kind) {
     case 'ocr': case 'transcribe': case 'summarize': case 'extract': return rUrlRoute(kind, text);
@@ -1630,6 +1699,7 @@ export function resolveInput(kind: InputKind, text: string): Resolved {
     case 'sanctions': return rSanctions(text);
     case 'coin': return rCoin(text);
     case 'board': return rBoard(text);
+    case 'claim': return rClaim(text);
   }
 }
 
