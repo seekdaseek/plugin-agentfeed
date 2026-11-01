@@ -964,6 +964,48 @@ export const ENDPOINTS: EndpointDef[] = [
     triggers: ['what do the TLS certificate, DNS records and security headers of https://www.example.com/ show', 'site signals for https://www.example.com/'],
     param: 'url',
   },
+  {
+    path: '/api/pkg-check',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_PKG_CHECK',
+    similes: ['PKG_CHECK', 'GET_PKG_CHECK'],
+    description:
+      'Use when an agent needs to know if an npm or PyPI version has a published advisory ($0.02). Returns flagged (any OSV advisory for that exact version), highest severity, advisories, release, scripts, downloads, name-squat flags. 404 or 503: not charged.',
+    triggers: ['does npm:minimist@1.2.5 have a published advisory', 'is there an advisory for requests 2.31.0 on pypi'],
+    input: 'pkg',
+  },
+  {
+    path: '/api/tx-precheck',
+    usd: 0.05,
+    action: 'AGENTFEED_GET_TX_PRECHECK',
+    similes: ['TX_PRECHECK', 'GET_TX_PRECHECK'],
+    description:
+      'Use when an agent needs to see what a Solana or Base transaction does before signing it ($0.05). Returns simulated balance changes, programs or contracts, approvals, new accounts, token-risk reads and warnings. 503 if it cannot simulate: not charged.',
+    triggers: [
+      'what would this Base transaction do before I sign it: from 0xe3478b0bb1a5084567c319096437924948be1964 to 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 data 0x095ea7b30000000000000000000000006ff5693b99212da76ad316178a184ab56d299b4300000000000000000000000000000000000000000000000000000000000f4240',
+      'simulate this Solana transaction before I sign it: <base64 transaction>',
+    ],
+    input: 'tx',
+  },
+  {
+    path: '/api/company-check',
+    usd: 0.25,
+    action: 'AGENTFEED_GET_COMPANY_CHECK',
+    similes: ['COMPANY_CHECK', 'GET_COMPANY_CHECK'],
+    description:
+      'Use when an agent needs to check a US-listed company ($0.25). Returns a verdict line and the SEC facts behind it: going-concern language, delisting-notice 8-Ks, overdue reports, insider Form 4 direction. EDGAR down (503) or a foreign filer (404) is not charged.',
+    triggers: ['do the latest SEC filings of $AAPL carry going-concern language or a delisting notice', 'company check: "Palantir Technologies"'],
+    input: 'company',
+  },
+  {
+    path: '/api/rwa-yields',
+    usd: 0.02,
+    action: 'AGENTFEED_GET_RWA_YIELDS',
+    similes: ['RWA_YIELDS', 'GET_RWA_YIELDS'],
+    description:
+      'Use when an agent needs the realized 7-day and 30-day yield of tokenized treasury and credit products, computed from issuer on-chain prices ($0.02). Returns NAV, yields, contract and method. A failed read answers 503, not charged.',
+    triggers: ['what annualized yield have tokenized treasury and credit products realized over the last 7 and 30 days, computed from their on-chain prices', 'rwa yields'],
+  },
 ];
 
 /**
@@ -1147,7 +1189,8 @@ export type InputKind =
   | 'translate' | 'classify' | 'injection'
   | 'hash' | 'qr' | 'convert' | 'time'
   | 'email' | 'domain' | 'wiki' | 'papers' | 'doi'
-  | 'sanctions' | 'coin' | 'board' | 'claim';
+  | 'sanctions' | 'coin' | 'board' | 'claim'
+  | 'pkg' | 'company' | 'tx';
 
 /** values fill the `:name` slots of the path template; extra are query parameters added after it. */
 export type Resolved = { values: Record<string, string>; extra: [string, string][] } | { refusal: string };
@@ -1681,6 +1724,232 @@ function rClaim(text: string): Resolved {
   return ok({ claim }, urls.map((u): [string, string] => ['urls', u]));
 }
 
+// ---- pkg-check: one npm or PyPI package, and one exact version when the message gives it ---
+const PKG_NAME = '(?:@[A-Za-z0-9][\\w.~-]*\\/)?[A-Za-z0-9][\\w.~-]*';
+const PKG_ECO: Record<string, 'npm' | 'pypi'> = { npm: 'npm', pnpm: 'npm', yarn: 'npm', pypi: 'pypi', pip: 'pypi', pip3: 'pypi', pipx: 'pypi' };
+const PKG_STOP = new Set(('a an the is are was were be been it its this that these those there here check checks checked checking scan scanned audit audited ' +
+  'vet verify validate look lookup see show tell give get run do does did can could would should will please pls hey hi hello advisory advisories vulnerability ' +
+  'vulnerabilities vulnerable vuln vulns cve cves osv ghsa security secure safe unsafe affected flagged malicious malware compromised risk risky known published ' +
+  'any anything some package packages pkg module modules library libraries lib libs dependency dependencies project registry release version versions latest ' +
+  'current newest npm pypi pip pip3 pnpm yarn pipx python node nodejs js javascript on in from at via for of to and or with without my our your me i we you ' +
+  'what which whether if has have having had about before after using use used install installed installing name named called exact specific ' +
+  'test tests start build init update upgrade publish ci login logout run exec link unlink uninstall remove rm outdated ls list cache config help').split(' '));
+const PKG_ASK_ECO = 'I need to know the ecosystem: write npm or pypi in the message, for example "npm:minimist@1.2.5" or "pypi:requests==2.31.0".';
+const PKG_BAD_VERSION = 'This check takes one exact version such as 4.17.21, not a range or a tag; leave the version off for the latest published one.';
+const PKG_VER_TAIL = /^\s+(?:(version|ver\.?)\s+)?([vV]?\d[0-9A-Za-z.+!~_-]*)/i;
+
+/** A version token: `{ v }` for an exact version (a leading v dropped) or `latest` (`v: null`), `{ bad }` for a range or tag, null when it is no version at all. */
+function pkgVersion(tok: string | undefined): { v: string | null } | { bad: true } | null {
+  if (tok === undefined) return { v: null };
+  const s = tok.replace(/[.,;:!?)\]]+$/, '');
+  if (/^latest$/i.test(s)) return { v: null };
+  if (/^[vV]?\d/.test(s)) return /(^|\.)[xX*]($|\.)/.test(s) ? { bad: true } : { v: s.replace(/^[vV](?=\d)/, '') };
+  return /^[\^~<>=*]/.test(s) ? { bad: true } : null;
+}
+/** A version right after the name ("lodash 4.17.20", "express version 4", "pkg v2"): a bare integer counts only with "version" or "v". */
+function pkgTailVersion(tail: string): string | null {
+  const m = PKG_VER_TAIL.exec(tail);
+  if (!m) return null;
+  const r = pkgVersion(m[2]);
+  return r && 'v' in r && (/\./.test(m[2]) || /^[vV]/.test(m[2]) || m[1]) ? r.v : null;
+}
+
+/**
+ * npm or PyPI package, from `npm:minimist@1.2.5`, `pypi:requests==2.31.0`, `pkg:npm/lodash@4.17.20`, `npm install left-pad@1.3.0`,
+ * `lodash@4.17.20 on npm` or "check lodash 4.17.20 on npm". The ecosystem must be named (npm, pypi, pip); the version is optional.
+ */
+function rPkg(text: string): Resolved {
+  const t = text.replace(/[`"“”]/g, ' ').replace(/(^|[\s([{,;:])['‘’]|['‘’](?=$|[\s)\]},;:.?!])/g, '$1 ');
+  let eco: 'npm' | 'pypi' | null = null;
+  let name: string | null = null;
+  let ver = undefined as string | null | undefined; // undefined: not looked at yet
+  let bad = /[\w)]\s*(?:>=?|<=?|~=|!=)\s*\d/.test(t) || /(?:^|[\s@])\^\d/.test(t) || /==\s*[<>^~]/.test(t);
+  const attach = (tok: string | undefined): void => {
+    const r = pkgVersion(tok);
+    if (r && 'bad' in r) bad = true;
+    else if (r === null) bad = true; // a word after @ or ==: a dist-tag, not a version
+    else ver = r.v;
+  };
+
+  // strong forms: the ecosystem and the name sit together
+  let m: RegExpExecArray | null;
+  if ((m = /\bpkg:(npm|pypi)\/([^\s@?#]+)(?:@([^\s?#]+))?/i.exec(t))) {
+    eco = m[1].toLowerCase() as 'npm' | 'pypi';
+    try { name = decodeURIComponent(m[2]); } catch { name = m[2]; }
+    attach(m[3]);
+  } else if ((m = new RegExp(`\\b(npm|pypi|pip):(${PKG_NAME})(?:\\s*(?:@|={2,3})\\s*([^\\s,;)]+))?`, 'i').exec(t))) {
+    eco = PKG_ECO[m[1].toLowerCase()];
+    name = m[2];
+    if (m[3] !== undefined) attach(m[3]);
+    else { const tv = pkgTailVersion(t.slice(m.index + m[0].length)); ver = tv; }
+  } else if ((m = new RegExp(`\\b(npm|pnpm|yarn|pip3?|pipx)\\s+(?:install|i|add)\\s+(?:-{1,2}[\\w-]+\\s+)*(${PKG_NAME})(?:\\s*(?:@|={2,3})\\s*([^\\s,;)]+))?`, 'i').exec(t))) {
+    eco = PKG_ECO[m[1].toLowerCase()];
+    name = m[2];
+    if (m[3] !== undefined) attach(m[3]);
+    else ver = pkgTailVersion(t.slice(m.index + m[0].length));
+  } else {
+    const ecos = new Set<'npm' | 'pypi'>();
+    for (const w of t.matchAll(/\b(npm|pnpm|yarn|pypi|pip3?|pipx)\b/gi)) ecos.add(PKG_ECO[w[1].toLowerCase()]);
+    if (ecos.size === 0) return no(PKG_ASK_ECO);
+    if (ecos.size > 1) return no('The message names both npm and pypi; ask for one package in one ecosystem at a time.');
+    eco = [...ecos][0];
+    // name@version or name==version, with the ecosystem named elsewhere in the message
+    for (const s of t.matchAll(new RegExp(`(?<![\\w/.~-])(${PKG_NAME})(?:@|={2,3})([^\\s,;)]+)`, 'g'))) {
+      const r = pkgVersion(s[2]);
+      if (r === null) continue; // user@example.com and the like
+      name = s[1];
+      attach(s[2]);
+      break;
+    }
+    // name followed by a version: "lodash 4.17.20", "express version 4"
+    if (!name) {
+      for (const s of t.matchAll(new RegExp(`(?<![\\w/.~@-])(${PKG_NAME})(?=\\s)`, 'g'))) {
+        if (PKG_STOP.has(s[1].toLowerCase()) || /^[vV]?\d+(\.\d+)*$/.test(s[1])) continue;
+        const tv = pkgTailVersion(t.slice(s.index + s[0].length));
+        if (tv !== null) { name = s[1]; ver = tv; break; }
+      }
+    }
+    // the only word left once the filler is taken out
+    if (!name) {
+      const left = new Map<string, string>();
+      for (const w of t.matchAll(new RegExp(PKG_NAME, 'g'))) {
+        const tok = w[0].replace(/[.~-]+$/, '');
+        if (!tok || PKG_STOP.has(tok.toLowerCase()) || /^[vV]?\d+(\.\d+)*$/.test(tok) || /^[vV]?\d+(\.\d+)+/.test(tok)) continue;
+        left.set(tok.toLowerCase(), tok);
+      }
+      if (left.size === 0) return no('I need the package name in the message, for example "npm:minimist@1.2.5" or "pypi:requests==2.31.0".');
+      if (left.size > 1) return no(`I cannot tell which package you mean (${[...left.values()].slice(0, 4).join(', ')}); write it as "npm:name@1.2.3" or "pypi:name==1.2.3".`);
+      name = [...left.values()][0];
+    }
+    if (ver === undefined) {
+      const vs = new Set<string>();
+      for (const v of t.matchAll(/(?<![\w@/.~-])([vV]?\d+(?:\.\d+)+[0-9A-Za-z.+!~_-]*)/g)) vs.add(v[1].replace(/[.,;:!?)\]]+$/, '').replace(/^[vV]/, ''));
+      if (vs.size > 1) return no('The message has more than one version; this check takes one package and one exact version.');
+      ver = vs.size ? [...vs][0] : null;
+    }
+  }
+  if (bad) return no(PKG_BAD_VERSION);
+  if (!name || !new RegExp(`^${PKG_NAME}$`).test(name)) return no('I need the package name in the message, for example "npm:minimist@1.2.5" or "pypi:requests==2.31.0".');
+  if (name.length > 214) return no('The package name is over the 214-character limit of npm.');
+  if (/\.(?:txt|json|toml|lock|cfg|ini|md|ya?ml)$/i.test(name)) return no('That is a file name, not a package name; give the package, for example "npm:minimist@1.2.5".');
+  if (eco === 'pypi' && name.startsWith('@')) return no('A scoped name such as @scope/name is an npm package; PyPI names have no scope.');
+  const extra: [string, string][] = [['name', name], ['ecosystem', eco as string]];
+  if (ver) extra.push(['version', ver]);
+  return ok({}, extra);
+}
+
+// ---- company-check: a US ticker, or a company name in quotes or after a colon ------------------
+const COMPANY_ABBR = /\b(?:Inc|Corp|Co|Ltd|Bros|Cos|Plc|Holdings?|Intl|Mfg|Svcs|N\.V|S\.A)$/i;
+/** The company name cut where it ends: at a line break, a ? or !, or the first full stop (kept when it closes an abbreviation such as Inc. or Corp.). */
+function companyCut(s: string): string {
+  let out = s.split('\n')[0];
+  const q = out.search(/[?!]/);
+  if (q >= 0) out = out.slice(0, q);
+  for (const m of out.matchAll(/\.(?=\s|$)/g)) {
+    const idx = m.index as number;
+    out = COMPANY_ABBR.test(out.slice(0, idx)) ? out.slice(0, idx + 1) : out.slice(0, idx);
+    break;
+  }
+  return out.replace(/[\s,;:]+$/, '').trim();
+}
+function rCompany(text: string): Resolved {
+  const asTicker = (s: string): string | null => {
+    const m = /^\$([A-Za-z]{1,5}(?:[.-][A-Za-z])?)$/.exec(s.trim()) || /^([A-Z]{1,5}(?:[.-][A-Z])?)$/.exec(s.trim());
+    return m ? m[1].toUpperCase().replace('.', '-') : null;
+  };
+  // 1. an explicit ticker: $AAPL or "ticker AAPL"
+  if (/\$[A-Za-z]{1,5}(?![A-Za-z0-9])/.test(text) || /\b(?:tickers?|symbols?)\b/i.test(text)) {
+    const t = matchSecTicker(text);
+    if (t) return ok({}, [['q', t]]);
+  }
+  // 2. a company name in quotes, or after a colon (it must start with a capital letter or a digit, up to 10 words)
+  const quoted = quotedSpan(text);
+  let name: string | null = null;
+  if (quoted) name = quoted.value;
+  else {
+    const b = afterBreak(text);
+    const p = b ? companyCut(b.payload) : '';
+    if (p && /^[A-Z0-9]/.test(p)) name = p;
+  }
+  if (name) {
+    const tk = asTicker(name);
+    if (tk) return ok({}, [['q', tk]]);
+    if (nchars(name) < 2 || nchars(name) > 100 || !/\p{L}/u.test(name) || /[<>\u0000-\u001f]/.test(name) || name.split(/\s+/).length > 10) {
+      return no('The company name must be 2 to 100 characters, up to 10 words; put just the name in double quotes or after a colon.');
+    }
+    return ok({}, [['q', name.replace(/\s+/g, ' ')]]);
+  }
+  // 3. a ticker the plugin knows, or one beside filing words
+  const t = matchSecTicker(text);
+  if (t) return ok({}, [['q', t]]);
+  return no('I need a US stock ticker (written like $AAPL or "ticker AAPL") or a company name in double quotes or after a colon in the message to run this check.');
+}
+
+// ---- tx-precheck: a base64 Solana transaction, or a Base transaction as hex to / from / data / value --
+const TX_NEEDS = 'I need a transaction to simulate: either a base64 Solana transaction (up to 1232 bytes) pasted in the message, or a Base transaction written as to 0x… (the address it calls), with optional from 0x…, data 0x… and value in wei. It is only simulated; nothing is signed or sent.';
+const TX_OTHER_CHAINS = /\b(ethereum|arbitrum|optimism|polygon|bsc|bnb|avalanche|linea|zksync|scroll|blast|mantle|gnosis)\b/i;
+const MAX_CALLDATA_HEX = 7500;
+function rTx(text: string): Resolved {
+  const t = text.replace(/[`"“”']/g, ' ');
+  // a Solana transaction: one long base64 token (hex and URLs are not base64 here)
+  let noUrls = t;
+  for (let u = matchUrl(noUrls); u; u = matchUrl(noUrls)) noUrls = noUrls.replace(u, ' ');
+  const blobs = new Set<string>();
+  for (const m of noUrls.matchAll(/(?<![A-Za-z0-9+/=_-])[A-Za-z0-9+/]{100,}={0,2}(?![A-Za-z0-9+/=_-])/g)) {
+    const s = m[0];
+    if (/^0x/i.test(s) || /^[0-9a-fA-F]+$/.test(s)) continue;
+    try { if (btoa(atob(s)).replace(/=+$/, '') !== s.replace(/=+$/, '')) continue; } catch { continue; }
+    blobs.add(s);
+  }
+  // a Base transaction: 0x tokens, labelled from / to / data / value
+  const hexes = [...t.matchAll(/(?<![0-9A-Za-z])0x[0-9a-fA-F]*(?![0-9A-Za-z])/g)].map((m) => m[0]);
+  const lab = (re: string): string | null => new RegExp(`(?<![\\w-])(?:${re})(?:\\s+address)?\\s*[:=]?\\s*(0x[0-9a-fA-F]*)(?![0-9A-Za-z])`, 'i').exec(t)?.[1] ?? null;
+  let to = lab('to|contract');
+  let from = lab('from|sender');
+  let data = lab('calldata|data|input');
+  const isAddr = (h: string | null): boolean => h !== null && h.length === 42;
+  if ((to !== null && !isAddr(to)) || (from !== null && !isAddr(from))) return no('An address is 0x followed by 40 hex characters.');
+  const vm = /(?<![\w-])value(?:\s+of)?\s*[:=]?\s*(0x[0-9a-fA-F]+|\d[\d.,_]*)(?![0-9A-Za-z])(\s*(?:wei|gwei|eth|ether))?/i.exec(t);
+  let value: string | null = null;
+  if (vm) {
+    const unit = vm[2]?.trim().toLowerCase();
+    vm[1] = vm[1].replace(/[.,;_]+$/, '');
+    if (/[.,_]/.test(vm[1]) || (unit && unit !== 'wei')) return no('The value must be in wei, as a plain decimal number or 0x hex (1 ETH is 1000000000000000000).');
+    if (vm[1].length > 80) return no('The value is over the 80-character limit of this check.');
+    value = vm[1];
+  }
+  const used = new Set([to, from, data, value].filter((x): x is string => x !== null).map((x) => x.toLowerCase()));
+  if (blobs.size === 0) {
+    // unlabelled: the one spare address is `to`, the one spare hex string that is not an address or a 32-byte hash is the calldata
+    const spare = hexes.filter((h) => !used.has(h.toLowerCase()));
+    const spareAddr = spare.filter((h) => h.length === 42);
+    if (to === null && spareAddr.length === 1) to = spareAddr[0];
+    if (data === null) {
+      const d = spare.filter((h) => h.length >= 10 && h.length !== 42 && h.length !== 66);
+      if (d.length === 1) data = d[0];
+    }
+  }
+  if (blobs.size > 0) {
+    if (to !== null || data !== null) return no('The message has both a Solana and a Base transaction; ask for one transaction at a time.');
+    if (blobs.size > 1) return no('The message has more than one base64 transaction; ask for one at a time.');
+    const tx = [...blobs][0];
+    if (tx.length > 1644 || atob(tx).length > 1232) return no('A Solana transaction is at most 1232 bytes (1644 base64 characters); this one is longer.');
+    return ok({}, [['chain', 'solana'], ['tx', tx]]);
+  }
+  if (to === null && from === null && data === null) return no(TX_NEEDS);
+  if (to === null) return no('I need the 0x address the Base transaction calls, written like "to 0x…", to simulate it. It is only simulated; nothing is signed or sent.');
+  if (TX_OTHER_CHAINS.test(t) && !/\bbase\b/i.test(t)) return no('This check simulates Solana and Base transactions only; the message names another chain.');
+  if (data !== null && data !== '0x') {
+    if ((data.length - 2) % 2 !== 0) return no('Calldata must be whole bytes: an even number of hex characters after 0x.');
+    if (data.length - 2 > MAX_CALLDATA_HEX) return no(`The calldata is ${data.length - 2} hex characters; this plugin sends up to ${MAX_CALLDATA_HEX} in the URL (the route itself takes 20,000).`);
+  }
+  const extra: [string, string][] = [['chain', 'base'], ['to', to]];
+  if (from !== null) extra.push(['from', from]);
+  if (data !== null && data !== '0x') extra.push(['data', data]);
+  if (value !== null) extra.push(['value', value]);
+  return ok({}, extra);
+}
+
 export function resolveInput(kind: InputKind, text: string): Resolved {
   switch (kind) {
     case 'ocr': case 'transcribe': case 'summarize': case 'extract': return rUrlRoute(kind, text);
@@ -1700,6 +1969,9 @@ export function resolveInput(kind: InputKind, text: string): Resolved {
     case 'coin': return rCoin(text);
     case 'board': return rBoard(text);
     case 'claim': return rClaim(text);
+    case 'pkg': return rPkg(text);
+    case 'company': return rCompany(text);
+    case 'tx': return rTx(text);
   }
 }
 

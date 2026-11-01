@@ -1,14 +1,14 @@
 # @seekdaseek/plugin-agentfeed
 
-Crypto market data for AI agents (liquidations, funding, open interest, prices), Solana pre-trade checks, OFAC sanctions screening, scholarly papers, x402 endpoint checks, claim checks against sources, site signals, utilities and fixed-purpose language tasks (OCR, translate, summarize, extract, classify, prompt-injection check, transcribe). An [elizaOS](https://github.com/elizaOS/eliza) plugin: every route is an action, paid per call in USDC over the [x402 protocol](https://x402.org) on Solana.
+Crypto market data for AI agents (liquidations, funding, open interest, prices), Solana pre-trade checks, transaction prechecks for Solana and Base, OFAC sanctions screening, scholarly papers, x402 endpoint checks, claim checks against sources, site signals, npm and PyPI advisories, SEC-based company checks, tokenized treasury yields, utilities and fixed-purpose language tasks (OCR, translate, summarize, extract, classify, prompt-injection check, transcribe). An [elizaOS](https://github.com/elizaOS/eliza) plugin: every route is an action, paid per call in USDC over the [x402 protocol](https://x402.org) on Solana.
 
 No API keys. No subscriptions. No signup. Your agent holds a wallet, and pays $0.001–$1 per call only when it actually needs data.
 
-Backed by [AgentFeed](https://x402.ochinimus.app): 91 paid data routes and 1 free one, 92 actions in all.
+Backed by [AgentFeed](https://x402.ochinimus.app): 95 paid data routes and 1 free one, 96 actions in all.
 
-- **Market data:** the liquidation tape (Bybit, OKX and Binance streams), a cascade backtest, a Hyperliquid funding radar over every perp, open interest, positioning, a signal board and a per-coin signal, spot prices read on-chain, tradfi perps, FX rates, a macro calendar, tokenized-stock peg data and collateral exit quotes.
-- **Solana pre-trade checks:** token check, token flow and holder clusters, plus token risk; and honeypot checks for tokens on Base, BNB Chain and Ethereum.
-- **Research and compliance:** OFAC sanctions screening, scholarly papers, Wikipedia, email and domain checks, SEC filings and insider trades, claim checks against sources, site signals, and web pages and PDFs as markdown.
+- **Market data:** the liquidation tape (Bybit, OKX and Binance streams), a cascade backtest, a Hyperliquid funding radar over every perp, open interest, positioning, a signal board and a per-coin signal, spot prices read on-chain, tradfi perps, FX rates, a macro calendar, tokenized-stock peg data, the realized yield of tokenized treasury and credit products and collateral exit quotes.
+- **Pre-trade checks:** for Solana tokens, a token check, token flow and holder clusters, plus token risk; honeypot checks for tokens on Base, BNB Chain and Ethereum; and a transaction precheck that simulates a Solana or Base transaction before it is signed.
+- **Research and compliance:** OFAC sanctions screening, scholarly papers, Wikipedia, email and domain checks, SEC filings and insider trades, claim checks against sources, site signals, npm and PyPI advisories, company checks against SEC filings, and web pages and PDFs as markdown.
 - **x402 endpoint checks:** a lint of an endpoint's payment challenge that never pays, and a test that pays it once.
 - **Utilities:** hash, QR, time and unit conversion.
 - **Fixed-purpose language tasks:** OCR, summarize, extract, translate, classify, prompt-injection check and transcribe.
@@ -111,6 +111,10 @@ The service itself takes x402 `exact` on eight networks in every 402 (Solana, Ba
 | `AGENTFEED_GET_CASCADE_BACKTEST` | Use when an agent needs what price did after past liquidation cascades. | $0.50 |
 | `AGENTFEED_GET_CLAIM_CHECK` | Use when an agent needs a short claim checked against sources. | $0.15 |
 | `AGENTFEED_GET_SITE_SIGNALS` | Use when an agent needs the technical facts of one website. | $0.02 |
+| `AGENTFEED_GET_PKG_CHECK` | Use when an agent needs to know if an npm or PyPI version has a published advisory. | $0.02 |
+| `AGENTFEED_GET_TX_PRECHECK` | Use when an agent needs to see what a Solana or Base transaction does before signing it. | $0.05 |
+| `AGENTFEED_GET_COMPANY_CHECK` | Use when an agent needs to check a US-listed company. | $0.25 |
+| `AGENTFEED_GET_RWA_YIELDS` | Use when an agent needs the realized 7-day and 30-day yield of tokenized treasury and credit products, computed from issuer on-chain prices. | $0.02 |
 
 Five of the actions look outward, at an endpoint, a claim, a site or the liquidation record:
 
@@ -119,6 +123,13 @@ Five of the actions look outward, at an endpoint, a claim, a site or the liquida
 - `AGENTFEED_GET_CASCADE_BACKTEST` returns past liquidation cascades with the price's 15 m, 1 h, 4 h and 24 h forward returns, n, mean, median, hit rate, a bootstrap interval and a random-time baseline; the plugin sends no parameters, so the service's default symbol and thresholds apply.
 - `AGENTFEED_GET_CLAIM_CHECK` checks one short claim against up to 3 https sources (a filing or Wikipedia articles when none are given) and returns SUPPORTED, CONTRADICTED or INSUFFICIENT with each supporting line quoted word for word.
 - `AGENTFEED_GET_SITE_SIGNALS` returns one website's TLS certificate, DNS records, a security-header grade over 8 checks, tech stack and social links.
+
+Four more look up one thing you name or one product class:
+
+- `AGENTFEED_GET_PKG_CHECK` looks one npm or PyPI package version up in OSV and the public registries and returns whether any advisory lists that exact version, the highest severity, the advisories, release data, install scripts, downloads and name-squat flags; without a version it checks the latest published one.
+- `AGENTFEED_GET_TX_PRECHECK` simulates one Solana or Base transaction and returns the balance changes, programs or contracts, approvals, new accounts, token-risk reads and warnings. The transaction is only simulated: the plugin never signs or sends it (the one thing the plugin's wallet signs is the payment for the call itself).
+- `AGENTFEED_GET_COMPANY_CHECK` quotes $0.25 and returns, for a US-listed company, a verdict line and the SEC facts behind it: going-concern language, delisting-notice 8-Ks, overdue reports and the direction of insider Form 4 filings. A foreign filer answers 404 and is not charged. The plugin sends the ticker or name as `q` and leaves the optional `site` off.
+- `AGENTFEED_GET_RWA_YIELDS` returns the realized 7-day and 30-day yield of tokenized treasury and credit products (`usdy`, `ousg`, `ustb`, `usyc`, `syrupusdc`), computed from issuer on-chain prices, with NAV, contract and method; the plugin sends no parameters, so every product comes back.
 
 ## How the actions read your message
 
@@ -146,6 +157,10 @@ Most actions need nothing but the question. The ones that take an input read it 
 | x402 lint, x402 test, site signals | an http(s) URL; the service takes https only for the test and for site signals |
 | claim check | the claim in double quotes or after a colon (10 to 300 characters); every https URL in the message is a source, up to 3 |
 | cascade backtest | nothing; the service's defaults apply |
+| pkg check | the ecosystem, `npm` or `pypi` (`pip` counts as pypi), and the package, as `npm:minimist@1.2.5`, `pypi:requests==2.31.0`, `pkg:npm/lodash@4.17.20`, `pip install requests==2.19.0` or "check lodash 4.17.20 on npm"; the version is optional and must be one exact version, not a range or a tag |
+| tx precheck | a base64 Solana transaction (up to 1232 bytes), or a Base transaction as `to 0x…` with optional `from 0x…`, `data 0x…` and `value` in wei (calldata up to 7,500 hex characters here); a message that names another chain is refused |
+| company check | a US ticker such as `$AAPL` or "ticker AAPL", or a company name in double quotes or after a colon (it starts with a capital letter or a digit, up to 10 words) |
+| rwa yields | nothing; every product is returned |
 
 Inputs travel in the URL of a GET, so a whole request over 8,000 characters once encoded is refused in words before anything is paid; the 4,000-character text limit of translate, classify and injection check is reachable only with plain Latin text.
 
