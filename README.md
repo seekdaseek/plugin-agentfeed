@@ -4,7 +4,7 @@ Crypto market data for AI agents (liquidations, funding, open interest, prices),
 
 No API keys. No subscriptions. No signup. Your agent holds a wallet, and pays $0.001–$1 per call only when it actually needs data.
 
-Backed by [AgentFeed](https://x402.ochinimus.app): 95 paid data routes and 1 free one, 96 actions in all.
+Backed by [AgentFeed](https://x402.ochinimus.app/?ref=npm-plugin-agentfeed), which serves 95 paid data routes, 8 free routes and 102 MCP tools (checked 13 Nov 2026, service version 2.12.0). This plugin exposes 96 of them as actions: the 95 paid data routes plus the free method.
 
 - **Market data:** the liquidation tape (Bybit, OKX and Binance streams), a cascade backtest, a Hyperliquid funding radar over every perp, open interest, positioning, a signal board and a per-coin signal, spot prices read on-chain, tradfi perps, FX rates, a macro calendar, tokenized-stock peg data, the realized yield of tokenized treasury and credit products and collateral exit quotes.
 - **Pre-trade checks:** for Solana tokens, a token check, token flow and holder clusters, plus token risk; honeypot checks for tokens on Base, BNB Chain and Ethereum; and a transaction precheck that simulates a Solana or Base transaction before it is signed.
